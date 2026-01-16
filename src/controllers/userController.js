@@ -1,7 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const { generateToken } = require("../config/jwt");
-
+const Flat = require("../models/Flat");
 
 // REGISTER
 exports.register = async (req, res) => {
@@ -18,7 +18,8 @@ exports.register = async (req, res) => {
       password: hashedPassword,
       firstName,
       lastName,
-      birthDate
+      birthDate,
+      favouriteFlats: [] // inicializa array de favoritos
     });
 
     res.status(201).json({ message: "User registered successfully", user });
@@ -43,8 +44,7 @@ exports.login = async (req, res) => {
       isAdmin: user.isAdmin
     });
 
-
-    res.json({ message: "Login successful", token });
+    res.json({ message: "Login successful", token, user }); // retorna user junto com token
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -80,18 +80,14 @@ exports.updateUser = async (req, res) => {
     if (req.user.id !== user._id.toString() && !req.user.isAdmin)
       return res.status(403).json({ message: "Access denied" });
 
-    const { firstName, lastName, email, birthDate, isAdmin } = req.body;
+    const { firstName, lastName, birthDate, isAdmin } = req.body;
 
     user.firstName = firstName || user.firstName;
     user.lastName = lastName || user.lastName;
-    user.email = email || user.email;
     user.birthDate = birthDate || user.birthDate;
 
-    // isAdmin só pode ser alterado por admin
     if (typeof isAdmin !== "undefined") {
-      if (!req.user.isAdmin) {
-        return res.status(403).json({ message: "Only admin can change isAdmin" });
-      }
+      if (!req.user.isAdmin) return res.status(403).json({ message: "Only admin can change isAdmin" });
       user.isAdmin = isAdmin;
     }
 
@@ -117,3 +113,41 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// TOGGLE FAVORITE (add/remove)
+exports.toggleFavorite = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const flatId = req.params.flatId;
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const index = user.favouriteFlats.indexOf(flatId);
+
+    if (index === -1) {
+      user.favouriteFlats.push(flatId);
+    } else {
+      user.favouriteFlats.splice(index, 1);
+    }
+
+    await user.save();
+    res.json(user.favouriteFlats); // retorna array atualizado
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// GET USER FAVORITES
+exports.getFavorites = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // busca todos os flats que estão no array de favoritos
+    const favoriteFlats = await Flat.find({ _id: { $in: user.favouriteFlats } });
+    res.json(favoriteFlats);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

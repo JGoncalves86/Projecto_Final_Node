@@ -24,8 +24,15 @@ exports.getFlatById = async (req, res) => {
 // ADD flat
 exports.addFlat = async (req, res) => {
   try {
-    const images = req.files ? req.files.map(file => file.filename) : [];
-    const flat = await Flat.create({ ...req.body, ownerId: req.user.id, images });
+    // Se houver arquivos, transforma em URLs completas
+    const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+
+    const flat = await Flat.create({
+      ...req.body,
+      ownerId: req.user.id,
+      images,
+    });
+
     res.status(201).json({ message: "Flat added", flat });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -38,14 +45,22 @@ exports.updateFlat = async (req, res) => {
     const flat = await Flat.findById(req.params.id);
     if (!flat) return res.status(404).json({ message: "Flat not found" });
 
+    // Somente o dono ou admin podem editar
     if (req.user.id !== flat.ownerId.toString() && !req.user.isAdmin)
       return res.status(403).json({ message: "Access denied" });
 
-    Object.assign(flat, req.body);
+    // Atualizar campos
+    const { city, streetName, streetNumber, areaSize, rentPrice } = req.body;
+    if (city !== undefined) flat.city = city;
+    if (streetName !== undefined) flat.streetName = streetName;
+    if (streetNumber !== undefined) flat.streetNumber = streetNumber;
+    if (areaSize !== undefined) flat.areaSize = areaSize;
+    if (rentPrice !== undefined) flat.rentPrice = rentPrice;
 
-    // Atualizar imagens se houver upload
-    if (req.files) {
-      flat.images = req.files.map(file => file.filename);
+    // Se houver novos arquivos enviados, adiciona às imagens existentes
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map(file => `/uploads/${file.filename}`);
+      flat.images = [...flat.images, ...newImages];
     }
 
     await flat.save();
@@ -54,7 +69,6 @@ exports.updateFlat = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 // DELETE flat
 exports.deleteFlat = async (req, res) => {
