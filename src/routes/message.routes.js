@@ -5,19 +5,25 @@ const messageController = require("../controllers/messageController");
 const auth = require("../middlewares/auth.middleware");
 
 router.get(
-  "/:id/messages",
+  "/unread-count",
+  auth,
+  messageController.getUnreadCount
+);
+
+router.get(
+  "/:flatId",
   auth,
   messageController.getAllMessages
 );
 
 router.get(
-  "/:id/messages/:senderId",
+  "/:flatId/:senderId",
   auth,
   messageController.getUserMessages
 );
 
 router.post(
-  "/:id/messages",
+  "/:flatId",
   auth,
   messageController.addMessage
 );

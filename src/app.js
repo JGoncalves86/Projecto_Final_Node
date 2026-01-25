@@ -18,7 +18,7 @@ const messageRoutes = require("./routes/message.routes");
 
 app.use("/users", userRoutes);
 app.use("/flats", flatRoutes);
-app.use("/flats", messageRoutes);
+app.use("/messages", messageRoutes);
 
 app.get("/", (req, res) => {
   res.send("FlatFinder API is running 🚀");
