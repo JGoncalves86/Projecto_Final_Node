@@ -7,12 +7,13 @@ exports.getAllMessages = async (req, res) => {
     const flat = await Flat.findById(req.params.id);
     if (!flat) return res.status(404).json({ message: "Flat not found" });
 
+    // Apenas o dono do flat ou admin podem ver todas as mensagens
     if (req.user.id !== flat.ownerId.toString() && !req.user.isAdmin)
       return res.status(403).json({ message: "Access denied" });
 
     const messages = await Message.find({ flatId: flat._id })
       .populate("senderId", "firstName lastName email")
-      .sort({ createdAt: -1 }); // mensagens mais recentes primeiro
+      .sort({ createdAt: -1 });
 
     res.json(messages);
   } catch (error) {
@@ -26,17 +27,21 @@ exports.getUserMessages = async (req, res) => {
     const flat = await Flat.findById(req.params.id);
     if (!flat) return res.status(404).json({ message: "Flat not found" });
 
-    if (
-      req.user.id !== req.params.senderId &&
-      req.user.id !== flat.ownerId.toString() &&
-      !req.user.isAdmin
-    )
+    const { senderId } = req.params;
+
+    // Apenas o sender, owner do flat ou admin
+    if (req.user.id !== senderId &&
+        req.user.id !== flat.ownerId.toString() &&
+        !req.user.isAdmin) {
       return res.status(403).json({ message: "Access denied" });
+    }
 
     const messages = await Message.find({
       flatId: flat._id,
-      senderId: req.params.senderId,
-    }).sort({ createdAt: -1 });
+      senderId: senderId,
+    })
+    .populate("senderId", "firstName lastName email")
+    .sort({ createdAt: -1 });
 
     res.json(messages);
   } catch (error) {
@@ -50,18 +55,31 @@ exports.addMessage = async (req, res) => {
     const flat = await Flat.findById(req.params.id);
     if (!flat) return res.status(404).json({ message: "Flat not found" });
 
-    // ✅ Melhorias: valida conteúdo
-    if (!req.body.content || req.body.content.trim() === "") {
+    const { content } = req.body;
+    if (!content || content.trim() === "") {
       return res.status(400).json({ message: "Message content is required" });
     }
 
     const message = await Message.create({
-      content: req.body.content,
+      content,
       flatId: flat._id,
       senderId: req.user.id,
     });
 
-    res.status(201).json({ message: "Message sent", messageData: message });
+    res.status(201).json({ message: "Message sent successfully", data: message });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// OPTIONAL: count unread messages for a user
+exports.getUnreadCount = async (req, res) => {
+  try {
+    const count = await Message.countDocuments({
+      receiverId: req.user.id,
+      read: false,
+    });
+    res.json({ count });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
