@@ -8,13 +8,13 @@ const app = express();
    CORS — TEM DE VIR PRIMEIRO
 ========================= */
 
-app.use(
-  cors({
-    origin: "*", // ⚠️ para desenvolvimento (depois afinamos)
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://o-teu-frontend.onrender.com"
+  ],
+  credentials: true,
+}));
 
 // 👉 responder explicitamente aos OPTIONS
 app.options("*", cors());
