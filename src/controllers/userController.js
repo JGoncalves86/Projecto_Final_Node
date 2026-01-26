@@ -138,14 +138,12 @@ exports.toggleFavorite = async (req, res) => {
 };
 
 // GET USER FAVORITES
-exports.getFavorites = async (req, res) => {
+exports.getUserFavorites = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).populate("favorites"); 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // busca todos os flats que estão no array de favoritos
-    const favoriteFlats = await Flat.find({ _id: { $in: user.favouriteFlats } });
-    res.json(favoriteFlats);
+    res.json(user.favorites); // retorna array de flats favoritos
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
