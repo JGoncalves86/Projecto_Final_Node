@@ -122,7 +122,8 @@ exports.toggleFavorite = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const index = user.favouriteFlats.indexOf(flatId);
+    const index = user.favouriteFlats.findIndex(f => f.toString() === flatId);
+
 
     if (index === -1) {
       user.favouriteFlats.push(flatId);
@@ -140,12 +141,13 @@ exports.toggleFavorite = async (req, res) => {
 // GET USER FAVORITES
 exports.getUserFavorites = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate("favorites"); 
+    const user = await User.findById(req.user.id).populate("favouriteFlats"); 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    res.json(user.favorites); // retorna array de flats favoritos
+    res.json(user.favouriteFlats); // retorna array de flats favoritos
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
