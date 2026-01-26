@@ -13,7 +13,7 @@ router.post("/login", userController.login);
 // -------------------
 // Protected routes
 // -------------------
-router.get("/profile", auth, userController.getProfile); // opcional
+router.get("/profile", auth, userController.getUserById); // opcional
 
 // Favorites routes (antes de /:id!)
 router.post("/favorites/:flatId", auth, userController.toggleFavorite);
