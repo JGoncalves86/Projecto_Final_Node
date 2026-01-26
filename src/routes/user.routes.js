@@ -15,7 +15,7 @@ router.post("/login", userController.login);
 // -------------------
 
 // Perfil do user logado
-router.get("/profile", auth, userController.getUserById); // retorna dados do próprio usuário
+router.get("/profile", auth, userController.getProfile); // retorna dados do próprio usuário
 
 // Favorites routes (sempre antes de /:id)
 router.post("/favorites/:flatId", auth, userController.toggleFavorite);
