@@ -25,6 +25,6 @@ router.delete("/:id", auth, userController.deleteUser);
 
 // Favorites routes
 router.post("/favorites/:flatId", auth, userController.toggleFavorite);
-router.get("/favorites", auth, userController.getFavorites);
+router.get("/favorites", auth, userController.getUserFavorites);
 
 module.exports = router;
