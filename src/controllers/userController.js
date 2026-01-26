@@ -22,7 +22,7 @@ exports.register = async (req, res) => {
       favouriteFlats: [] // inicializa array de favoritos
     });
 
-    res.status(201).json({ message: "error 201 : User registered successfully", user });
+    res.status(201).json({ message: "User registered successfully", user });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -64,7 +64,7 @@ exports.getAllUsers = async (req, res) => {
 exports.getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select("-password");
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: "error 404 : User not found" });
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
