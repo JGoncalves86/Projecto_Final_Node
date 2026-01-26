@@ -5,12 +5,11 @@ const Flat = require("../models/Flat");
 exports.getAllMessages = async (req, res) => {
   try {
     const flat = await Flat.findById(req.params.id);
-    if (!flat) return res.status(404).json({ message: "Flat not found" });
+    if (!flat) return res.status(404).json({ message: "error 404 : Flat not found" });
 
     // Apenas o dono do flat ou admin podem ver todas as mensagens
     if (req.user.id !== flat.ownerId.toString() && !req.user.isAdmin)
-      return res.status(403).json({ message: "Access denied" });
-
+      return res.status(403).json({ message: "error 403 : Access denied" });
     const messages = await Message.find({ flatId: flat._id })
       .populate("senderId", "firstName lastName email")
       .sort({ createdAt: -1 });
@@ -25,7 +24,7 @@ exports.getAllMessages = async (req, res) => {
 exports.getUserMessages = async (req, res) => {
   try {
     const flat = await Flat.findById(req.params.id);
-    if (!flat) return res.status(404).json({ message: "Flat not found" });
+    if (!flat) return res.status(404).json({ message: "error 404 : Flat not found" });
 
     const { senderId } = req.params;
 
@@ -33,7 +32,7 @@ exports.getUserMessages = async (req, res) => {
     if (req.user.id !== senderId &&
         req.user.id !== flat.ownerId.toString() &&
         !req.user.isAdmin) {
-      return res.status(403).json({ message: "Access denied" });
+      return res.status(403).json({ message: "error 403 : Access denied" });
     }
 
     const messages = await Message.find({
@@ -53,11 +52,11 @@ exports.getUserMessages = async (req, res) => {
 exports.addMessage = async (req, res) => {
   try {
     const flat = await Flat.findById(req.params.id);
-    if (!flat) return res.status(404).json({ message: "Flat not found" });
+    if (!flat) return res.status(404).json({ message: "error 404 : Flat not found" });
 
     const { content } = req.body;
     if (!content || content.trim() === "") {
-      return res.status(400).json({ message: "Message content is required" });
+      return res.status(400).json({ message: "error 400 : Message content is required" });
     }
 
     const message = await Message.create({
@@ -66,7 +65,7 @@ exports.addMessage = async (req, res) => {
       senderId: req.user.id,
     });
 
-    res.status(201).json({ message: "Message sent successfully", data: message });
+    res.status(201).json({ message: "error 201 : Message sent successfully", data: message });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

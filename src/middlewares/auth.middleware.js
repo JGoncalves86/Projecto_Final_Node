@@ -4,7 +4,7 @@ module.exports = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader)
-    return res.status(401).json({ message: "Token not provided" });
+    return res.status(401).json({ message: "error 401 : Token not provided" });
 
   const token = authHeader.split(" ")[1];
 
@@ -13,6 +13,6 @@ module.exports = (req, res, next) => {
     req.user = decoded; // { id, isAdmin }
     next();
   } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
+    res.status(401).json({ message: "error 401 : Invalid token" });
   }
 };

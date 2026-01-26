@@ -9,7 +9,7 @@ exports.register = async (req, res) => {
     const { email, password, firstName, lastName, birthDate } = req.body;
 
     const userExists = await User.findOne({ email });
-    if (userExists) return res.status(400).json({ message: "User already exists" });
+    if (userExists) return res.status(400).json({ message: "error 400 : User already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -22,7 +22,7 @@ exports.register = async (req, res) => {
       favouriteFlats: [] // inicializa array de favoritos
     });
 
-    res.status(201).json({ message: "User registered successfully", user });
+    res.status(201).json({ message: "error 201 : User registered successfully", user });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -34,10 +34,10 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+    if (!user) return res.status(401).json({ message: "error 401 : Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
+    if (!isMatch) return res.status(401).json({ message: "error 401 : Invalid credentials" });
 
     const token = generateToken({
       id: user._id,
@@ -75,10 +75,10 @@ exports.getUserById = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: "error 404 : User not found" });
 
     if (req.user.id !== user._id.toString() && !req.user.isAdmin)
-      return res.status(403).json({ message: "Access denied" });
+      return res.status(403).json({ message: "error 403 : Access denied" });
 
     const { firstName, lastName, birthDate, isAdmin } = req.body;
 
@@ -87,7 +87,7 @@ exports.updateUser = async (req, res) => {
     user.birthDate = birthDate || user.birthDate;
 
     if (typeof isAdmin !== "undefined") {
-      if (!req.user.isAdmin) return res.status(403).json({ message: "Only admin can change isAdmin" });
+      if (!req.user.isAdmin) return res.status(403).json({ message: "error 403 : Only admin can change isAdmin" });
       user.isAdmin = isAdmin;
     }
 
@@ -102,10 +102,10 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: "error 404 : User not found" });
 
     if (req.user.id !== user._id.toString() && !req.user.isAdmin)
-      return res.status(403).json({ message: "Access denied" });
+      return res.status(403).json({ message: "error 403 : Access denied" });
 
     await user.deleteOne();
     res.json({ message: "User deleted" });
@@ -120,7 +120,7 @@ exports.toggleFavorite = async (req, res) => {
     const user = await User.findById(req.user.id);
     const flatId = req.params.flatId;
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: "error 404 : User not found" });
 
     const index = user.favouriteFlats.findIndex(f => f.toString() === flatId);
 
@@ -142,7 +142,7 @@ exports.toggleFavorite = async (req, res) => {
 exports.getUserFavorites = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).populate("favouriteFlats"); 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: "error 404 : User not found" });
 
     res.json(user.favouriteFlats); // retorna array de flats favoritos
   } catch (error) {

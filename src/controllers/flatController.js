@@ -14,7 +14,7 @@ exports.getAllFlats = async (req, res) => {
 exports.getFlatById = async (req, res) => {
   try {
     const flat = await Flat.findById(req.params.id).populate("ownerId", "firstName lastName email");
-    if (!flat) return res.status(404).json({ message: "Flat not found" });
+    if (!flat) return res.status(404).json({ message: "error 404 : Flat not found" });
     res.json(flat);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -43,12 +43,11 @@ exports.addFlat = async (req, res) => {
 exports.updateFlat = async (req, res) => {
   try {
     const flat = await Flat.findById(req.params.id);
-    if (!flat) return res.status(404).json({ message: "Flat not found" });
+    if (!flat) return res.status(404).json({ message: "error 404 : Flat not found" });
 
     // Somente o dono ou admin podem editar
     if (req.user.id !== flat.ownerId.toString() && !req.user.isAdmin)
-      return res.status(403).json({ message: "Access denied" });
-
+      return res.status(403).json({ message: "error 403 : Access denied" });
     // Atualizar campos
     const { city, streetName, streetNumber, areaSize, rentPrice } = req.body;
     if (city !== undefined) flat.city = city;
@@ -74,10 +73,10 @@ exports.updateFlat = async (req, res) => {
 exports.deleteFlat = async (req, res) => {
   try {
     const flat = await Flat.findById(req.params.id);
-    if (!flat) return res.status(404).json({ message: "Flat not found" });
+    if (!flat) return res.status(404).json({ message: "error 404 : Flat not found" });
 
     if (req.user.id !== flat.ownerId.toString() && !req.user.isAdmin)
-      return res.status(403).json({ message: "Access denied" });
+      return res.status(403).json({ message: "error 403 : Access denied" });
 
     await flat.deleteOne();
     res.json({ message: "Flat deleted" });
