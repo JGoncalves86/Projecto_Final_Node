@@ -25,7 +25,7 @@ router.get("/favorites", auth, userController.getUserFavorites);
 router.get("/", auth, adminMiddleware, userController.getAllUsers);
 
 // Rotas por ID (deve vir por último)
-router.get("/:id", auth, userController.getUserById);
+router.get("/:id", auth, userController.getProfile);
 router.patch("/:id", auth, userController.updateUser);
 router.delete("/:id", auth, userController.deleteUser);
 
