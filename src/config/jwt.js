@@ -5,16 +5,14 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
 
 // Gera token
 const generateToken = (payload) => {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is not defined');
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 };
 
 // Verifica token
 const verifyToken = (token) => {
-  try {
-    return jwt.verify(token, JWT_SECRET);
-  } catch (err) {
-    throw new Error('Invalid or expired token');
-  }
+  if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is not defined');
+  return jwt.verify(token, process.env.JWT_SECRET);
 };
 
 module.exports = {
