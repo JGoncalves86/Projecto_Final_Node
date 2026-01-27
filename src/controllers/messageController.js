@@ -1,85 +1,54 @@
-const Message = require("../models/Message");
-const Flat = require("../models/Flat");
+const messageService = require('../services/message.service');
+const { createMessageSchema } = require('../validations/message.validation');
 
-// GET all messages of a flat (only owner or admin)
-exports.getAllMessages = async (req, res) => {
+// CREATE MESSAGE
+const createMessage = async (req, res, next) => {
   try {
-    const flat = await Flat.findById(req.params.id);
-    if (!flat) return res.status(404).json({ message: "error 404 : Flat not found" });
+    const { error } = createMessageSchema.validate(req.body);
+    if (error) return res.status(400).json({ message: error.message });
 
-    // Apenas o dono do flat ou admin podem ver todas as mensagens
-    if (req.user.id !== flat.ownerId.toString() && !req.user.isAdmin)
-      return res.status(403).json({ message: "error 403 : Access denied" });
-    const messages = await Message.find({ flatId: flat._id })
-      .populate("senderId", "firstName lastName email")
-      .sort({ createdAt: -1 });
+    const data = { ...req.body, senderId: req.user.id };
+    const message = await messageService.createMessage(data);
 
-    res.json(messages);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// GET messages from a specific sender (sender, owner, or admin)
-exports.getUserMessages = async (req, res) => {
-  try {
-    const flat = await Flat.findById(req.params.id);
-    if (!flat) return res.status(404).json({ message: "error 404 : Flat not found" });
-
-    const { senderId } = req.params;
-
-    // Apenas o sender, owner do flat ou admin
-    if (req.user.id !== senderId &&
-        req.user.id !== flat.ownerId.toString() &&
-        !req.user.isAdmin) {
-      return res.status(403).json({ message: "error 403 : Access denied" });
-    }
-
-    const messages = await Message.find({
-      flatId: flat._id,
-      senderId: senderId,
-    })
-    .populate("senderId", "firstName lastName email")
-    .sort({ createdAt: -1 });
-
-    res.json(messages);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// ADD new message
-exports.addMessage = async (req, res) => {
-  try {
-    const flat = await Flat.findById(req.params.id);
-    if (!flat) return res.status(404).json({ message: "error 404 : Flat not found" });
-
-    const { content } = req.body;
-    if (!content || content.trim() === "") {
-      return res.status(400).json({ message: "error 400 : Message content is required" });
-    }
-
-    const message = await Message.create({
-      content,
-      flatId: flat._id,
-      senderId: req.user.id,
+    res.status(201).json({
+      message: 'Message sent successfully',
+      data: message,
     });
-
-    res.status(201).json({ message: "Message sent successfully", data: message });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    next(err);
   }
 };
 
-// OPTIONAL: count unread messages for a user
-exports.getUnreadCount = async (req, res) => {
+// LIST MESSAGES BY FLAT
+const listMessagesByFlat = async (req, res, next) => {
   try {
-    const count = await Message.countDocuments({
-      receiverId: req.user.id,
-      read: false,
-    });
-    res.json({ count });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    const flatId = req.params.flatId;
+    const messages = await messageService.listMessagesByFlat(flatId);
+
+    res.status(200).json(messages);
+  } catch (err) {
+    next(err);
   }
+};
+
+// DELETE MESSAGE
+const deleteMessage = async (req, res, next) => {
+  try {
+    const messageId = req.params.id;
+    const result = await messageService.deleteMessage(
+      messageId,
+      req.user.id,
+      req.user.isAdmin
+    );
+
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = {
+  createMessage,
+  listMessagesByFlat,
+  deleteMessage,
 };

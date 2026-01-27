@@ -1,26 +1,53 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const userController = require("../controllers/userController");
-const authMiddleware = require("../middlewares/auth.middleware");
 
-// ======================
-// ROTAS PÚBLICAS
-// ======================
-router.post("/register", userController.register);
-router.post("/login", userController.login);
+const userController = require('../controllers/user.controller');
+const authMiddleware = require('../middlewares/auth.middleware');
+const adminMiddleware = require('../middlewares/admin.middleware');
 
-// ======================
-// ROTAS PROTEGIDAS (exigem JWT)
-// ======================
-router.use(authMiddleware);
+// ==========================
+// PUBLIC ROUTES
+// ==========================
+router.post('/register', userController.register);
+router.post('/login', userController.login);
 
-router.get("/profile", userController.getProfile);
-router.get("/", userController.getAllUsers);        // só admin deve usar
-router.patch("/:id", userController.updateUser);
-router.delete("/:id", userController.deleteUser);
+// ==========================
+// AUTHENTICATED USER
+// ==========================
+router.get('/me', authMiddleware, userController.getProfile);
 
-// FAVORITOS
-router.post("/favorites/:flatId", userController.toggleFavorite);
-router.get("/favorites", userController.getUserFavorites);
+router.put('/me', authMiddleware, userController.updateProfile);
+
+// ==========================
+// FAVORITES
+// ==========================
+router.post(
+  '/favorites/:flatId',
+  authMiddleware,
+  userController.addFavorite
+);
+
+router.delete(
+  '/favorites/:flatId',
+  authMiddleware,
+  userController.removeFavorite
+);
+
+// ==========================
+// ADMIN ONLY
+// ==========================
+router.get(
+  '/',
+  authMiddleware,
+  adminMiddleware,
+  userController.listUsers
+);
+
+router.delete(
+  '/:id',
+  authMiddleware,
+  adminMiddleware,
+  userController.deleteUser
+);
 
 module.exports = router;

@@ -1,31 +1,16 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
 
-const messageController = require("../controllers/messageController");
-const auth = require("../middlewares/auth.middleware");
+const messageController = require('../controllers/message.controller');
+const authMiddleware = require('../middlewares/auth.middleware');
 
-router.get(
-  "/unread-count",
-  auth,
-  messageController.getUnreadCount
-);
+// CREATE MESSAGE
+router.post('/', authMiddleware, messageController.createMessage);
 
-router.get(
-  "/:flatId",
-  auth,
-  messageController.getAllMessages
-);
+// LIST MESSAGES BY FLAT
+router.get('/flat/:flatId', messageController.listMessagesByFlat);
 
-router.get(
-  "/:flatId/:senderId",
-  auth,
-  messageController.getUserMessages
-);
-
-router.post(
-  "/:flatId",
-  auth,
-  messageController.addMessage
-);
+// DELETE MESSAGE
+router.delete('/:id', authMiddleware, messageController.deleteMessage);
 
 module.exports = router;

@@ -1,26 +1,31 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const flatController = require("../controllers/flatController");
-const authMiddleware = require("../middlewares/auth.middleware");
-const upload = require("../middlewares/upload.middleware");
 
-// 🔐 TODAS as rotas exigem autenticação
-router.use(authMiddleware);
+const flatController = require('../controllers/flat.controller');
+const authMiddleware = require('../middlewares/auth.middleware');
+const adminMiddleware = require('../middlewares/admin.middleware');
 
-// Criar flat
-router.post("/", upload.array("images", 5), flatController.addFlat);
+// ==========================
+// PUBLIC ROUTES
+// ==========================
 
-// Atualizar flat
-router.put("/:id", upload.array("images", 5), flatController.updateFlat);
+// List flats with filters, sorting, pagination
+router.get('/', flatController.listFlats);
 
-// Listar flats
-router.get("/", flatController.getAllFlats);
+// Get flat by ID
+router.get('/:id', flatController.getFlatById);
 
-// Ver flat
-router.get("/:id", flatController.getFlatById);
+// ==========================
+// PROTECTED ROUTES
+// ==========================
 
-// Apagar flat
-router.delete("/:id", flatController.deleteFlat);
+// Create flat (owner = logged in user)
+router.post('/', authMiddleware, flatController.createFlat);
+
+// Update flat (owner or admin)
+router.put('/:id', authMiddleware, flatController.updateFlat);
+
+// Delete flat (owner or admin)
+router.delete('/:id', authMiddleware, flatController.deleteFlat);
 
 module.exports = router;
-

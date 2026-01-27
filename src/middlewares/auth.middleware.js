@@ -1,18 +1,23 @@
-const { verifyToken } = require("../config/jwt");
+const { verifyToken } = require('../config/jwt');
 
-module.exports = (req, res, next) => {
+const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Authentication token missing' });
+  }
 
-  if (!authHeader || !authHeader.startsWith("Bearer "))
-    return res.status(401).json({ message: "error 401 : Token not provided" });
-
-  const token = authHeader.split(" ")[1];
+  const token = authHeader.split(' ')[1];
 
   try {
     const decoded = verifyToken(token);
-    req.user = decoded;
+    req.user = {
+      id: decoded.id,
+      isAdmin: decoded.isAdmin || false,
+    };
     next();
-  } catch {
-    res.status(401).json({ message: "error 401 : Invalid token" });
+  } catch (err) {
+    return res.status(401).json({ message: err.message });
   }
 };
+
+module.exports = authMiddleware;

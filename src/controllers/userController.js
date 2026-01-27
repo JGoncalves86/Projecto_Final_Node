@@ -1,179 +1,122 @@
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
-const { generateToken } = require("../config/jwt");
+const userService = require('../services/user.service');
+const {
+  registerSchema,
+  loginSchema,
+  updateUserSchema,
+} = require('../validations/user.validation');
 
-// ======================
+// ==========================
 // REGISTER
-// ======================
-exports.register = async (req, res) => {
+// ==========================
+const register = async (req, res, next) => {
   try {
-    const { email, password, firstName, lastName, birthDate } = req.body;
-
-    // Verifica se o utilizador já existe
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: "error 400 : User already exists" });
+    const { error } = registerSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.message });
     }
 
-    // Hash da password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await userService.registerUser(req.body);
 
-    // Criar utilizador
-    const user = await User.create({
-      email,
-      password: hashedPassword,
-      firstName,
-      lastName,
-      birthDate,
-      favouriteFlats: [],
-      isAdmin: false
+    res.status(201).json({
+      message: 'User registered successfully',
+      user: result.user,
+      token: result.token,
     });
-
-    res.status(201).json({ message: "User registered successfully", user });
-  } catch (error) {
-    console.error("Register error:", error);
-    res.status(500).json({ message: "error 500 : " + error.message });
+  } catch (err) {
+    next(err);
   }
 };
 
-// ======================
+// ==========================
 // LOGIN
-// ======================
-exports.login = async (req, res) => {
+// ==========================
+const login = async (req, res, next) => {
   try {
+    const { error } = loginSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+
     const { email, password } = req.body;
+    const result = await userService.loginUser(email, password);
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: "error 401 : Invalid credentials" });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "error 401 : Invalid credentials" });
-    }
-
-    // Gera token JWT
-    const token = generateToken({
-      id: user._id,
-      isAdmin: user.isAdmin
+    res.status(200).json({
+      message: 'Login successful',
+      user: result.user,
+      token: result.token,
     });
-
-    res.json({ message: "Login successful", token, user });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "error 500 : " + error.message });
+  } catch (err) {
+    next(err);
   }
 };
 
-// ======================
-// GET LOGGED USER PROFILE
-// ======================
-exports.getProfile = async (req, res) => {
+// ==========================
+// UPDATE PROFILE
+// ==========================
+const updateProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id)
-      .select("-password")
-      .populate("favouriteFlats");
-
-    if (!user) return res.status(404).json({ message: "error 404 : User not found" });
-
-    res.json(user);
-  } catch (error) {
-    console.error("GetProfile error:", error);
-    res.status(500).json({ message: "error 500 : " + error.message });
-  }
-};
-
-// ======================
-// UPDATE USER
-// ======================
-exports.updateUser = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: "error 404 : User not found" });
-
-    // Apenas o dono ou admin podem editar
-    if (req.user.id !== user._id.toString() && !req.user.isAdmin) {
-      return res.status(403).json({ message: "error 403 : Access denied" });
+    const { error } = updateUserSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.message });
     }
 
-    const { firstName, lastName, birthDate, isAdmin } = req.body;
+    const updatedUser = await userService.updateUser(
+      req.user.id,
+      req.body
+    );
 
-    user.firstName = firstName || user.firstName;
-    user.lastName = lastName || user.lastName;
-    user.birthDate = birthDate || user.birthDate;
-
-    if (typeof isAdmin !== "undefined") {
-      if (!req.user.isAdmin) {
-        return res.status(403).json({ message: "error 403 : Only admin can change isAdmin" });
-      }
-      user.isAdmin = isAdmin;
-    }
-
-    await user.save();
-    res.json({ message: "User updated", user });
-  } catch (error) {
-    console.error("UpdateUser error:", error);
-    res.status(500).json({ message: "error 500 : " + error.message });
+    res.status(200).json({
+      message: 'User updated successfully',
+      user: updatedUser,
+    });
+  } catch (err) {
+    next(err);
   }
 };
 
-// ======================
-// DELETE USER
-// ======================
-exports.deleteUser = async (req, res) => {
+// ==========================
+// FAVORITES
+// ==========================
+const addFavorite = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: "error 404 : User not found" });
+    const { flatId } = req.params;
 
-    if (req.user.id !== user._id.toString() && !req.user.isAdmin) {
-      return res.status(403).json({ message: "error 403 : Access denied" });
-    }
+    const user = await userService.addFavoriteFlat(
+      req.user.id,
+      flatId
+    );
 
-    await user.deleteOne();
-    res.json({ message: "User deleted" });
-  } catch (error) {
-    console.error("DeleteUser error:", error);
-    res.status(500).json({ message: "error 500 : " + error.message });
+    res.status(200).json({
+      message: 'Flat added to favorites',
+      user,
+    });
+  } catch (err) {
+    next(err);
   }
 };
 
-// ======================
-// TOGGLE FAVORITE
-// ======================
-exports.toggleFavorite = async (req, res) => {
+const removeFavorite = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: "error 404 : User not found" });
+    const { flatId } = req.params;
 
-    const flatId = req.params.flatId;
-    const index = user.favouriteFlats.findIndex(f => f.toString() === flatId);
+    const user = await userService.removeFavoriteFlat(
+      req.user.id,
+      flatId
+    );
 
-    if (index === -1) {
-      user.favouriteFlats.push(flatId);
-    } else {
-      user.favouriteFlats.splice(index, 1);
-    }
-
-    await user.save();
-    res.json(user.favouriteFlats);
-  } catch (error) {
-    console.error("ToggleFavorite error:", error);
-    res.status(500).json({ message: "error 500 : " + error.message });
+    res.status(200).json({
+      message: 'Flat removed from favorites',
+      user,
+    });
+  } catch (err) {
+    next(err);
   }
 };
 
-// ======================
-// GET USER FAVORITES
-// ======================
-exports.getUserFavorites = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).populate("favouriteFlats");
-    if (!user) return res.status(404).json({ message: "error 404 : User not found" });
-
-    res.json(user.favouriteFlats);
-  } catch (error) {
-    console.error("GetUserFavorites error:", error);
-    res.status(500).json({ message: "error 500 : " + error.message });
-  }
+module.exports = {
+  register,
+  login,
+  updateProfile,
+  addFavorite,
+  removeFavorite,
 };

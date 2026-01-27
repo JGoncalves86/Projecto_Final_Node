@@ -1,163 +1,126 @@
-const Flat = require("../models/Flat");
+const flatService = require('../services/flat.service');
+const { createFlatSchema, updateFlatSchema } = require('../validations/flat.validation');
 
-/* ===========================
-   GET ALL FLATS
-=========================== */
-exports.getAllFlats = async (req, res) => {
+// ==========================
+// CREATE FLAT
+// ==========================
+const createFlat = async (req, res, next) => {
   try {
-    const flats = await Flat.find().populate(
-      "ownerId",
-      "firstName lastName email"
-    );
-    res.json(flats);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-/* ===========================
-   GET FLAT BY ID
-=========================== */
-exports.getFlatById = async (req, res) => {
-  try {
-    const flat = await Flat.findById(req.params.id).populate(
-      "ownerId",
-      "firstName lastName email"
-    );
-
-    if (!flat) {
-      return res.status(404).json({ message: "Flat not found" });
+    // adicionar imagens do upload ao body
+    if (req.files) {
+      req.body.images = req.files.map(file => file.path);
     }
 
-    res.json(flat);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+    const { error } = createFlatSchema.validate(req.body);
+    if (error) return res.status(400).json({ message: error.message });
 
-/* ===========================
-   CREATE FLAT
-=========================== */
-exports.addFlat = async (req, res) => {
-  try {
-    // 🔐 Auth check
-    if (!req.user) {
-      return res.status(401).json({ message: "Utilizador não autenticado" });
-    }
-
-    const ownerId = req.user._id || req.user.id;
-
-    // 🖼️ Imagens (APENAS via Multer)
-    let images = [];
-    if (req.files && req.files.length > 0) {
-      images = req.files.map(
-        (file) => `/uploads/${file.filename}`
-      );
-    }
-
-    const flatData = {
-      city: req.body.city,
-      streetName: req.body.streetName,
-      streetNumber: Number(req.body.streetNumber),
-      areaSize: Number(req.body.areaSize),
-      rentPrice: Number(req.body.rentPrice),
-      ownerId,
-      images,
-    };
-
-    const flat = await Flat.create(flatData);
+    // ownerId = user autenticado
+    const data = { ...req.body, ownerId: req.user.id };
+    const flat = await flatService.createFlat(data);
 
     res.status(201).json({
-      message: "Flat created successfully",
+      message: 'Flat created successfully',
       flat,
     });
-  } catch (error) {
-    console.error("Erro ao criar flat:", error);
-    res.status(500).json({
-      message: "Erro ao criar flat",
-      error: error.message,
-    });
+  } catch (err) {
+    next(err);
   }
 };
 
-/* ===========================
-   UPDATE FLAT
-=========================== */
-exports.updateFlat = async (req, res) => {
+// ==========================
+// UPDATE FLAT
+// ==========================
+const updateFlat = async (req, res, next) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Utilizador não autenticado" });
-    }
-
-    const flat = await Flat.findById(req.params.id);
-    if (!flat) {
-      return res.status(404).json({ message: "Flat not found" });
-    }
-
-    // 🔐 Permissões
-    if (
-      flat.ownerId.toString() !== (req.user._id || req.user.id) &&
-      !req.user.isAdmin
-    ) {
-      return res.status(403).json({ message: "Access denied" });
-    }
-
-    // 🔄 Campos
-    if (req.body.city !== undefined) flat.city = req.body.city;
-    if (req.body.streetName !== undefined) flat.streetName = req.body.streetName;
-    if (req.body.streetNumber !== undefined)
-      flat.streetNumber = Number(req.body.streetNumber);
-    if (req.body.areaSize !== undefined)
-      flat.areaSize = Number(req.body.areaSize);
-    if (req.body.rentPrice !== undefined)
-      flat.rentPrice = Number(req.body.rentPrice);
-
-    // 🖼️ Imagens existentes
-    if (req.body.existingImages) {
-      flat.images = JSON.parse(req.body.existingImages);
-    }
-
-    // ➕ Novas imagens
+    // adicionar novas imagens, se houver upload
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(
-        (file) => `/uploads/${file.filename}`
-      );
-      flat.images = [...flat.images, ...newImages];
+      req.body.images = req.files.map(file => file.path);
     }
 
-    await flat.save();
+    const { error } = updateFlatSchema.validate(req.body);
+    if (error) return res.status(400).json({ message: error.message });
 
-    res.json({ message: "Flat updated successfully", flat });
-  } catch (error) {
-    console.error("Erro ao atualizar flat:", error);
-    res.status(500).json({ message: error.message });
+    const flatId = req.params.id;
+    const updatedFlat = await flatService.updateFlat(
+      flatId,
+      req.user.id,
+      req.body,
+      req.user.isAdmin
+    );
+
+    res.status(200).json({
+      message: 'Flat updated successfully',
+      flat: updatedFlat,
+    });
+  } catch (err) {
+    next(err);
   }
 };
 
-/* ===========================
-   DELETE FLAT
-=========================== */
-exports.deleteFlat = async (req, res) => {
+// ==========================
+// DELETE FLAT
+// ==========================
+const deleteFlat = async (req, res, next) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Utilizador não autenticado" });
-    }
+    const flatId = req.params.id;
+    const result = await flatService.deleteFlat(flatId, req.user.id, req.user.isAdmin);
 
-    const flat = await Flat.findById(req.params.id);
-    if (!flat) {
-      return res.status(404).json({ message: "Flat not found" });
-    }
-
-    if (
-      flat.ownerId.toString() !== (req.user._id || req.user.id) &&
-      !req.user.isAdmin
-    ) {
-      return res.status(403).json({ message: "Access denied" });
-    }
-
-    await flat.deleteOne();
-    res.json({ message: "Flat deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
   }
+};
+
+// ==========================
+// GET FLAT BY ID
+// ==========================
+const getFlatById = async (req, res, next) => {
+  try {
+    const flatId = req.params.id;
+    const flat = await flatService.getFlatById(flatId);
+
+    res.status(200).json(flat);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ==========================
+// LIST FLATS (FILTERS + SORT + PAGINATION)
+// ==========================
+const listFlats = async (req, res, next) => {
+  try {
+    const filters = {
+      city: req.query.city,
+      hasAC: req.query.hasAC !== undefined ? req.query.hasAC === 'true' : undefined,
+      minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
+      maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
+      ownerId: req.query.ownerId,
+      dateAvailable: req.query.dateAvailable,
+    };
+
+    const sort = {};
+    if (req.query.sortBy && req.query.order) {
+      sort[req.query.sortBy] = req.query.order === 'asc' ? 1 : -1;
+    } else {
+      sort.createdAt = -1;
+    }
+
+    const limit = req.query.limit ? Number(req.query.limit) : 20;
+    const skip = req.query.skip ? Number(req.query.skip) : 0;
+
+    const flats = await flatService.listFlats(filters, sort, limit, skip);
+
+    res.status(200).json(flats);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = {
+  createFlat,
+  updateFlat,
+  deleteFlat,
+  getFlatById,
+  listFlats,
 };
