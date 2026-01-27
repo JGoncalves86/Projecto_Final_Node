@@ -28,23 +28,33 @@ const register = async (req, res, next) => {
 // ==========================
 // LOGIN
 // ==========================
-const login = async (req, res, next) => {
+const login = async (req, res) => {
   try {
-    const { error } = loginSchema.validate(req.body);
-    if (error) return res.status(400).json({ message: error.message });
+    console.log('REQ.BODY:', req.body); // DEBUG: ver o body recebido
+
+    if (!req.body || !req.body.email || !req.body.password) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Email e password são obrigatórios',
+      });
+    }
 
     const { email, password } = req.body;
+
     const result = await userService.loginUser(email, password);
 
     res.status(200).json({
+      status: 'success',
       message: 'Login successful',
       user: result.user,
       token: result.token,
     });
   } catch (err) {
-    next(err);
+    console.error('Login error:', err.message);
+    res.status(401).json({ status: 'fail', message: err.message });
   }
 };
+
 
 // ==========================
 // GET PROFILE

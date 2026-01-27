@@ -31,16 +31,35 @@ const registerUser = async (data) => {
 // LOGIN USER
 // ==========================
 const loginUser = async (email, password) => {
+  if (!email || !password) {
+    throw new Error('Email e password são obrigatórios');
+  }
+
+  // Procurar usuário
   const user = await User.findOne({ email });
-  if (!user) throw new Error('Invalid email or password');
+  if (!user) {
+    console.error(`Login failed: usuário não encontrado (${email})`);
+    throw new Error('Email ou password inválido');
+  }
 
+  // Comparar senha
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) throw new Error('Invalid email or password');
+  if (!isMatch) {
+    console.error(`Login failed: senha incorreta (${email})`);
+    throw new Error('Email ou password inválido');
+  }
 
+  // Checar JWT_SECRET
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET não definido no ambiente');
+  }
+
+  // Gerar token
   const token = generateToken({ id: user._id.toString(), isAdmin: user.isAdmin });
 
   return { user, token };
 };
+
 
 // ==========================
 // GET USER BY ID
