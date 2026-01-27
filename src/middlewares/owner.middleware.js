@@ -1,5 +1,5 @@
 const Flat = require('../models/Flat');
-const Message = require('../models/message');
+const Message = require('../models/Message');
 
 const ownerMiddleware = (resource) => {
   return async (req, res, next) => {
