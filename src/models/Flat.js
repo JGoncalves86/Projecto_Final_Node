@@ -17,3 +17,5 @@ const FlatSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+module.exports = mongoose.model("Flat", FlatSchema);
