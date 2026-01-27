@@ -11,6 +11,10 @@ const errorMiddleware = require('./middlewares/error.middleware');
 
 const app = express();
 
+console.log('JWT_SECRET:', process.env.JWT_SECRET);
+console.log('MONGO_URI:', process.env.MONGO_URI);
+
+
 // ==========================
 // MIDDLEWARES GLOBAIS
 // ==========================
