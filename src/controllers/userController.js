@@ -9,29 +9,27 @@ exports.register = async (req, res) => {
   try {
     const { email, password, firstName, lastName, birthDate } = req.body;
 
-    // Validar campos obrigatórios
-    if (!email || !password || !firstName || !lastName) {
-      return res.status(400).json({ message: "error 400 : Missing required fields" });
-    }
-
-    // Verificar se já existe
+    // Verifica se o utilizador já existe
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: "error 400 : User already exists" });
     }
 
+    // Hash da password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Criar utilizador
     const user = await User.create({
       email,
       password: hashedPassword,
       firstName,
       lastName,
       birthDate,
-      favouriteFlats: []
+      favouriteFlats: [],
+      isAdmin: false
     });
 
-    res.status(201).json({ message: "User registered successfully", user: { ...user._doc, password: undefined } });
+    res.status(201).json({ message: "User registered successfully", user });
   } catch (error) {
     console.error("Register error:", error);
     res.status(500).json({ message: "error 500 : " + error.message });
@@ -45,10 +43,6 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "error 400 : Email and password are required" });
-    }
-
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: "error 401 : Invalid credentials" });
@@ -59,9 +53,13 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: "error 401 : Invalid credentials" });
     }
 
-    const token = generateToken({ id: user._id, isAdmin: user.isAdmin || false });
+    // Gera token JWT
+    const token = generateToken({
+      id: user._id,
+      isAdmin: user.isAdmin
+    });
 
-    res.json({ message: "Login successful", token, user: { ...user._doc, password: undefined } });
+    res.json({ message: "Login successful", token, user });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "error 500 : " + error.message });
@@ -73,19 +71,15 @@ exports.login = async (req, res) => {
 // ======================
 exports.getProfile = async (req, res) => {
   try {
-    if (!req.user) return res.status(401).json({ message: "error 401 : Unauthorized" });
-
     const user = await User.findById(req.user.id)
       .select("-password")
       .populate("favouriteFlats");
 
-    if (!user) {
-      return res.status(404).json({ message: "error 404 : User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "error 404 : User not found" });
 
     res.json(user);
   } catch (error) {
-    console.error("Get profile error:", error);
+    console.error("GetProfile error:", error);
     res.status(500).json({ message: "error 500 : " + error.message });
   }
 };
@@ -98,18 +92,17 @@ exports.updateUser = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "error 404 : User not found" });
 
-    // Só o próprio user ou admin pode atualizar
+    // Apenas o dono ou admin podem editar
     if (req.user.id !== user._id.toString() && !req.user.isAdmin) {
       return res.status(403).json({ message: "error 403 : Access denied" });
     }
 
-    const { firstName, lastName, birthDate, isAdmin, password } = req.body;
+    const { firstName, lastName, birthDate, isAdmin } = req.body;
 
-    if (firstName) user.firstName = firstName;
-    if (lastName) user.lastName = lastName;
-    if (birthDate) user.birthDate = birthDate;
+    user.firstName = firstName || user.firstName;
+    user.lastName = lastName || user.lastName;
+    user.birthDate = birthDate || user.birthDate;
 
-    // Só admin pode alterar isAdmin
     if (typeof isAdmin !== "undefined") {
       if (!req.user.isAdmin) {
         return res.status(403).json({ message: "error 403 : Only admin can change isAdmin" });
@@ -117,15 +110,10 @@ exports.updateUser = async (req, res) => {
       user.isAdmin = isAdmin;
     }
 
-    // Atualizar password se fornecida
-    if (password) {
-      user.password = await bcrypt.hash(password, 10);
-    }
-
     await user.save();
-    res.json({ message: "User updated", user: { ...user._doc, password: undefined } });
+    res.json({ message: "User updated", user });
   } catch (error) {
-    console.error("Update user error:", error);
+    console.error("UpdateUser error:", error);
     res.status(500).json({ message: "error 500 : " + error.message });
   }
 };
@@ -145,7 +133,7 @@ exports.deleteUser = async (req, res) => {
     await user.deleteOne();
     res.json({ message: "User deleted" });
   } catch (error) {
-    console.error("Delete user error:", error);
+    console.error("DeleteUser error:", error);
     res.status(500).json({ message: "error 500 : " + error.message });
   }
 };
@@ -156,11 +144,11 @@ exports.deleteUser = async (req, res) => {
 exports.toggleFavorite = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    const flatId = req.params.flatId;
-
     if (!user) return res.status(404).json({ message: "error 404 : User not found" });
 
+    const flatId = req.params.flatId;
     const index = user.favouriteFlats.findIndex(f => f.toString() === flatId);
+
     if (index === -1) {
       user.favouriteFlats.push(flatId);
     } else {
@@ -170,7 +158,7 @@ exports.toggleFavorite = async (req, res) => {
     await user.save();
     res.json(user.favouriteFlats);
   } catch (error) {
-    console.error("Toggle favorite error:", error);
+    console.error("ToggleFavorite error:", error);
     res.status(500).json({ message: "error 500 : " + error.message });
   }
 };
@@ -185,36 +173,7 @@ exports.getUserFavorites = async (req, res) => {
 
     res.json(user.favouriteFlats);
   } catch (error) {
-    console.error("Get user favorites error:", error);
-    res.status(500).json({ message: "error 500 : " + error.message });
-  }
-};
-
-// ======================
-// GET ALL USERS (ADMIN)
-// ======================
-exports.getAllUsers = async (req, res) => {
-  try {
-    if (!req.user.isAdmin) return res.status(403).json({ message: "error 403 : Access denied" });
-
-    const users = await User.find().select("-password");
-    res.json(users);
-  } catch (error) {
-    console.error("Get all users error:", error);
-    res.status(500).json({ message: "error 500 : " + error.message });
-  }
-};
-
-// ======================
-// GET USER BY ID
-// ======================
-exports.getUserById = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id).select("-password");
-    if (!user) return res.status(404).json({ message: "error 404 : User not found" });
-    res.json(user);
-  } catch (error) {
-    console.error("Get user by ID error:", error);
+    console.error("GetUserFavorites error:", error);
     res.status(500).json({ message: "error 500 : " + error.message });
   }
 };
