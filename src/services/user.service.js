@@ -35,16 +35,16 @@ const loginUser = async (email, password) => {
     throw new Error('Email e password são obrigatórios');
   }
 
-  // Procurar usuário
-  const user = await User.findOne({ email });
+  // Buscar usuário e incluir password
+  const user = await User.findOne({ email }).select('+password');
+
+  console.log('Senha fornecida:', password);
+  console.log('Senha no DB:', user ? user.password : undefined);
+
   if (!user) {
     console.error(`Login failed: usuário não encontrado (${email})`);
     throw new Error('Email ou password inválido');
   }
-
-  // Comparar senha
-    console.log('Senha fornecida:', password);
-    console.log('Senha no DB:', user.password);
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
@@ -52,16 +52,15 @@ const loginUser = async (email, password) => {
     throw new Error('Email ou password inválido');
   }
 
-  // Checar JWT_SECRET
   if (!process.env.JWT_SECRET) {
     throw new Error('JWT_SECRET não definido no ambiente');
   }
 
-  // Gerar token
   const token = generateToken({ id: user._id.toString(), isAdmin: user.isAdmin });
 
   return { user, token };
 };
+
 
 
 // ==========================
