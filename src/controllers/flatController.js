@@ -21,21 +21,44 @@ exports.getFlatById = async (req, res) => {
   }
 };
 
-// ADD flat
+// ADD flat corrigido
 exports.addFlat = async (req, res) => {
   try {
-    // Se houver arquivos, transforma em URLs completas
-    const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    // 1. Verificar se o utilizador existe (proteção extra)
+    if (!req.user) {
+      return res.status(401).json({ message: "Utilizador não autenticado" });
+    }
 
-    const flat = await Flat.create({
-      ...req.body,
-      ownerId: req.user.id,
-      images,
-    });
+    // 2. Preparar as imagens
+    // Se vierem arquivos (Multer), usamos os caminhos. 
+    // Se vierem URLs no body (JSON), usamos o que vem do front.
+    let images = [];
+    if (req.files && req.files.length > 0) {
+      images = req.files.map(file => `/uploads/${file.filename}`);
+    } else if (req.body.images) {
+      images = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
+    }
 
-    res.status(201).json({ message: "Flat added", flat });
+    // 3. Criar o objeto com conversão explícita para evitar erros de Schema
+    const flatData = {
+      city: req.body.city,
+      streetName: req.body.streetName,
+      streetNumber: Number(req.body.streetNumber),
+      areaSize: Number(req.body.areaSize),
+      hasAC: req.body.hasAC === 'true' || req.body.hasAC === true,
+      yearBuilt: req.body.yearBuilt ? Number(req.body.yearBuilt) : undefined,
+      rentPrice: Number(req.body.rentPrice),
+      dateAvailable: req.body.dateAvailable || undefined,
+      ownerId: req.user._id || req.user.id, // Tenta ambos os formatos de ID
+      images: images
+    };
+
+    const flat = await Flat.create(flatData);
+
+    res.status(201).json({ message: "Flat added successfully", flat });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Erro no AddFlat:", error); // Isto vai aparecer nos logs do Render!
+    res.status(500).json({ message: "Erro ao criar flat: " + error.message });
   }
 };
 
