@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const flatSchema = new mongoose.Schema(
   {
     city: { type: String, required: true, trim: true },
