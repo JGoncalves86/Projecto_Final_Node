@@ -43,6 +43,9 @@ const loginUser = async (email, password) => {
   }
 
   // Comparar senha
+    console.log('Senha fornecida:', password);
+    console.log('Senha no DB:', user.password);
+
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
     console.error(`Login failed: senha incorreta (${email})`);
