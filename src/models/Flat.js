@@ -1,16 +1,15 @@
-const FlatSchema = new mongoose.Schema({
-  city: { type: String, required: true },
-  streetName: { type: String, required: true },
-  streetNumber: Number,
-  areaSize: Number,
-  hasAC: Boolean,
-  yearBuilt: Number,
-  rentPrice: { type: Number, required: true },
-  dateAvailable: Date,
-  ownerId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "User", 
-    required: true 
+const FlatSchema = new mongoose.Schema(
+  {
+    city: { type: String, required: true },
+    streetName: { type: String, required: true },
+    streetNumber: { type: Number, required: true },
+    areaSize: { type: Number, required: true },
+    hasAC: { type: Boolean, default: false },
+    yearBuilt: { type: Number },
+    rentPrice: { type: Number, required: true },
+    dateAvailable: { type: Date },
+    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    images: [{ type: String }] // <- NOVO campo para armazenar caminhos das imagens
   },
-  images: [String] // Array de strings simples, sem validação de URL
-}, { timestamps: true });
+  { timestamps: true }
+);
