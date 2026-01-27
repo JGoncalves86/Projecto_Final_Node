@@ -4,25 +4,25 @@ const MessageSchema = new mongoose.Schema(
   {
     content: {
       type: String,
-      required: [true, "O conteúdo da mensagem é obrigatório"],
+      required: true,
       trim: true,
-      validate: {
-        validator: (value) => value.length > 0,
-        message: "O conteúdo da mensagem não pode estar vazio",
-      },
     },
     flatId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Flat",
-      required: [true, "O ID do flat é obrigatório"],
+      required: true,
     },
     senderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "O ID do remetente é obrigatório"],
+      required: true,
     },
+    read: {
+      type: Boolean,
+      default: false
+    }
   },
-  { timestamps: true } // createdAt / updatedAt automáticos
+  { timestamps: true } 
 );
 
 module.exports = mongoose.model("Message", MessageSchema);
