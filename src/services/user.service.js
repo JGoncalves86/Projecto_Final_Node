@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const User = require('../models/User');
+const User = require('../models/User'); 
 const { generateToken } = require('../config/jwt');
 
 // ==========================
@@ -8,11 +8,9 @@ const { generateToken } = require('../config/jwt');
 const registerUser = async (data) => {
   const { email, password, firstName, lastName, birthDate } = data;
 
-  // Checa email duplicado
   const existingUser = await User.findOne({ email });
   if (existingUser) throw new Error('Email already in use');
 
-  // Hash da senha
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await User.create({
@@ -21,10 +19,9 @@ const registerUser = async (data) => {
     firstName,
     lastName,
     birthDate,
-    isAdmin: false, // por padrão
+    isAdmin: false,
   });
 
-  // Gerar token JWT
   const token = generateToken({ id: user._id.toString(), isAdmin: user.isAdmin });
 
   return { user, token };
@@ -40,10 +37,36 @@ const loginUser = async (email, password) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error('Invalid email or password');
 
-  // Gerar token JWT
   const token = generateToken({ id: user._id.toString(), isAdmin: user.isAdmin });
 
   return { user, token };
+};
+
+// ==========================
+// GET USER BY ID
+// ==========================
+const getUserById = async (id) => {
+  const user = await User.findById(id).select('-password');
+  if (!user) throw new Error('User not found');
+  return user;
+};
+
+// ==========================
+// LIST ALL USERS (ADMIN)
+// ==========================
+const listAllUsers = async () => {
+  const users = await User.find().select('-password');
+  return users;
+};
+
+// ==========================
+// DELETE USER (ADMIN)
+// ==========================
+const deleteUser = async (id) => {
+  const user = await User.findById(id);
+  if (!user) throw new Error('User not found');
+  await user.remove();
+  return true;
 };
 
 // ==========================
@@ -53,7 +76,6 @@ const updateUser = async (userId, data) => {
   const user = await User.findById(userId);
   if (!user) throw new Error('User not found');
 
-  // Se senha for atualizada, hash
   if (data.password) {
     data.password = await bcrypt.hash(data.password, 10);
   }
@@ -64,8 +86,36 @@ const updateUser = async (userId, data) => {
   return user;
 };
 
+// ==========================
+// FAVORITES
+// ==========================
+const addFavoriteFlat = async (userId, flatId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+
+  if (!user.favorites) user.favorites = [];
+  if (!user.favorites.includes(flatId)) user.favorites.push(flatId);
+
+  await user.save();
+  return user;
+};
+
+const removeFavoriteFlat = async (userId, flatId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error('User not found');
+
+  user.favorites = user.favorites.filter(f => f.toString() !== flatId);
+  await user.save();
+  return user;
+};
+
 module.exports = {
   registerUser,
   loginUser,
+  getUserById,
+  listAllUsers,
+  deleteUser,
   updateUser,
+  addFavoriteFlat,
+  removeFavoriteFlat,
 };
