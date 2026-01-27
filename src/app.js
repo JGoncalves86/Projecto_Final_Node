@@ -4,6 +4,8 @@ const morgan = require('morgan'); // logs de requisições
 const cors = require('cors');
 const path = require('path');
 
+const bodyParser = require('body-parser');
+
 const userRoutes = require('./routes/user.routes');
 const flatRoutes = require('./routes/flat.routes');
 const messageRoutes = require('./routes/message.routes');
@@ -22,6 +24,11 @@ app.use(cors()); // permitir requisições cross-origin
 app.use(morgan('dev')); // logs no console
 app.use(express.json()); // body JSON
 app.use(express.urlencoded({ extended: true })); // body urlencoded
+
+
+// Forçar parse de JSON mesmo se Content-Type estiver estranho
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // ==========================
 // ARQUIVOS ESTÁTICOS (UPLOADS)
