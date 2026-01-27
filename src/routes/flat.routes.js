@@ -4,19 +4,23 @@ const flatController = require("../controllers/flatController");
 const authMiddleware = require("../middlewares/auth.middleware");
 const upload = require("../middlewares/upload.middleware");
 
-// Todas as rotas exigem JWT
+// 🔐 TODAS as rotas exigem autenticação
 router.use(authMiddleware);
 
-// Criar Flat com múltiplas imagens
-router.post("/", upload.array("images", 5), flatController.addFlat); // até 5 imagens
+// Criar flat
+router.post("/", upload.array("images", 5), flatController.addFlat);
 
-// Atualizar Flat (também pode atualizar imagens)
-router.patch("/:id", upload.array("images", 5), flatController.updateFlat);
+// Atualizar flat
+router.put("/:id", upload.array("images", 5), flatController.updateFlat);
 
+// Listar flats
 router.get("/", flatController.getAllFlats);
+
+// Ver flat
 router.get("/:id", flatController.getFlatById);
+
+// Apagar flat
 router.delete("/:id", flatController.deleteFlat);
 
 module.exports = router;
-
 

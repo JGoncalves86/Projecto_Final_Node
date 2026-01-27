@@ -11,7 +11,9 @@ const FlatSchema = new mongoose.Schema(
     rentPrice: { type: Number, required: true },
     dateAvailable: { type: Date },
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    images: [{ type: String }] // <- NOVO campo para armazenar caminhos das imagens
+    images: {
+        type: [String],
+        default: []} // <- NOVO campo para armazenar caminhos das imagens
   },
   { timestamps: true }
 );
