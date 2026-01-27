@@ -31,6 +31,11 @@ app.use('/users', userRoutes);
 app.use('/flats', flatRoutes);
 app.use('/messages', messageRoutes);
 
+app.get('/', (req, res) => {
+  res.send('Backend is running! Visit /users, /flats or /messages for API.');
+});
+
+
 // ==========================
 // MIDDLEWARE GLOBAL DE ERROS
 // ==========================
