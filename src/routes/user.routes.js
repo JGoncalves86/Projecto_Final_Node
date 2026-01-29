@@ -23,6 +23,11 @@ router.put('/me', authMiddleware, userController.updateProfile);
 // ==========================
 // FAVORITES
 // ==========================
+router.get(
+  '/favorites',
+  authMiddleware,
+  userController.getMyFavourites
+);
 router.post(
   '/favorites/:flatId',
   authMiddleware,
