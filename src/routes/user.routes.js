@@ -29,13 +29,13 @@ router.get(
   userController.getMyFavourites
 );
 router.post(
-  '/favorites/:flatId',
+  '/me/favorites/:flatId',
   authMiddleware,
   userService.addFavoriteFlat
 );
 
 router.delete(
-  '/favorites/:flatId',
+  '/me/favorites/:flatId',
   authMiddleware,
   userService.removeFavoriteFlat    
 );
