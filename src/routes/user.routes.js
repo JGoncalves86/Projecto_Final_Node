@@ -24,7 +24,7 @@ router.put('/me', authMiddleware, userController.updateProfile);
 // FAVORITES
 // ==========================
 router.get(
-  '/favorites',
+  '/me/favorites',
   authMiddleware,
   userController.getMyFavourites
 );
