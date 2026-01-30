@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const messageSchema = new mongoose.Schema(
   {
@@ -7,20 +7,26 @@ const messageSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+
     flatId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Flat',
+      ref: "Flat",
       required: true,
     },
+
     senderId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
+      required: true,
+    },
+
+    receiverId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-module.exports = mongoose.model('Message', messageSchema);
+module.exports = mongoose.model("Message", messageSchema);

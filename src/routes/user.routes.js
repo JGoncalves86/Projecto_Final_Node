@@ -3,7 +3,6 @@ const router = express.Router();
 
 const userController = require('../controllers/userController');
 const userService = require('../services/user.service');
-console.log('userController:', userController);
 const authMiddleware = require('../middlewares/auth.middleware');
 const adminMiddleware = require('../middlewares/admin.middleware');
 
@@ -23,11 +22,8 @@ router.put('/me', authMiddleware, userController.updateProfile);
 // ==========================
 // FAVORITES
 // ==========================
-router.get(
-  '/me/favorites',
-  authMiddleware,
-  userController.getMyFavourites
-);
+router.get("/me/favourites", authMiddleware, userController.getMyFavourites);
+
 router.post(
   '/me/favorites/:flatId',
   authMiddleware,

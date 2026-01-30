@@ -37,8 +37,35 @@ const deleteMessage = async (messageId, userId, isAdmin = false) => {
   return { message: 'Message deleted successfully' };
 };
 
+// LIST FLATS WHERE USER HAS MESSAGES
+const getMyConversations = async (userId) => {
+  const messages = await Message.find({ senderId: userId })
+    .populate("flatId", "title city images")
+    .sort({ createdAt: -1 });
+
+  // agrupar por flat
+  const map = new Map();
+
+  messages.forEach((msg) => {
+    const flat = msg.flatId;
+    if (!flat) return;
+
+    if (!map.has(flat._id.toString())) {
+      map.set(flat._id.toString(), {
+        flat,
+        lastMessage: msg.content,
+        date: msg.createdAt,
+      });
+    }
+  });
+
+  return Array.from(map.values());
+};
+
 module.exports = {
   createMessage,
   listMessagesByFlat,
   deleteMessage,
+  getMyConversations,
 };
+

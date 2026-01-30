@@ -1,5 +1,7 @@
 const userService = require('../services/user.service');
 const Joi = require('joi');
+const User = require("../models/User");
+
 
 // ==========================
 // LOGIN SCHEMA
@@ -95,27 +97,18 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// ==========================
-// GET MY FAVOURITES
-// ==========================
-
-
-const getMyFavourites = async (req, res) => {
+// GET MY FAVOURITE FLATS
+const getMyFavourites = async (req, res, next) => {
   try {
-    const userId = req.user.id; // vem do middleware auth
-
-    const user = await User.findById(userId).populate("favouriteFlats");
+    const user = await User.findById(req.user.id).populate("favouriteFlats");
 
     if (!user) {
-      return res.status(404).json({ message: "Utilizador não encontrado." });
+      return res.status(404).json({ message: "User not found" });
     }
 
-    return res.status(200).json(user.favouriteFlats);
-  } catch (error) {
-    console.error("Erro ao buscar favoritos:", error);
-    return res.status(500).json({
-      message: "Erro interno ao carregar favoritos.",
-    });
+    res.status(200).json(user.favouriteFlats);
+  } catch (err) {
+    next(err);
   }
 };
 

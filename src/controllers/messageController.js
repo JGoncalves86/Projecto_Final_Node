@@ -47,8 +47,23 @@ const deleteMessage = async (req, res, next) => {
   }
 };
 
+// GET MY CONVERSATIONS (Flats where I sent messages)
+const getMyConversations = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const conversations = await messageService.getMyConversations(userId);
+
+    res.status(200).json(conversations);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createMessage,
   listMessagesByFlat,
   deleteMessage,
+  getMyConversations,
 };
+
