@@ -27,6 +27,14 @@ router.get(
   messageController.getUnreadCount
 );
 
+// MARK CHAT AS READ
+router.patch(
+  "/flat/:flatId/read",
+  authMiddleware,
+  messageController.markAsRead
+);
+
+
 
 
 module.exports = router;

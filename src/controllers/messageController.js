@@ -78,13 +78,30 @@ const getUnreadCount = async (req, res, next) => {
   }
 };
 
+// MARK FLAT MESSAGES AS READ
+const markAsRead = async (req, res, next) => {
+  try {
+    const flatId = req.params.flatId;
+    const userId = req.user.id;
+
+    const result = await messageService.markFlatMessagesAsRead(flatId, userId);
+
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 
 module.exports = {
   createMessage,
   listMessagesByFlat,
   deleteMessage,
   getMyConversations,
-  getUnreadCount, // ✅
+  getUnreadCount,
+  markAsRead, // ✅ NEW
 };
+
 
 

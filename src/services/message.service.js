@@ -72,6 +72,26 @@ const getUnreadCount = async (userId) => {
   return count;
 };
 
+// MARK MESSAGES AS READ IN A FLAT
+const markFlatMessagesAsRead = async (flatId, userId) => {
+  const result = await Message.updateMany(
+    {
+      flatId: flatId,
+      receiverId: userId,
+      isRead: false,
+    },
+    {
+      $set: { isRead: true },
+    }
+  );
+
+  return {
+    message: "Messages marked as read",
+    updated: result.modifiedCount,
+  };
+};
+
+
 
 module.exports = {
   createMessage,
@@ -79,5 +99,7 @@ module.exports = {
   deleteMessage,
   getMyConversations,
   getUnreadCount,
+  markFlatMessagesAsRead, // ✅ NEW
 };
+
 
