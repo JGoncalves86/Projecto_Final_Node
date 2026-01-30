@@ -13,7 +13,7 @@ router.get("/flat/:flatId", authMiddleware, messageController.listMessagesByFlat
 // DELETE MESSAGE
 router.delete("/:id", authMiddleware, messageController.deleteMessage);
 
-// GET MY CONVERSATIONS (Inbox)
+// GET MY CONVERSATIONS
 router.get(
   "/me/conversations",
   authMiddleware,
