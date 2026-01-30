@@ -60,10 +60,25 @@ const getMyConversations = async (req, res, next) => {
   }
 };
 
+// GET UNREAD COUNT
+const getUnreadCount = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const count = await messageService.getUnreadCount(userId);
+
+    res.status(200).json({ unread: count });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createMessage,
   listMessagesByFlat,
   deleteMessage,
   getMyConversations,
+  getUnreadCount, // ✅
 };
+
 

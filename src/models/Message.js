@@ -25,6 +25,12 @@ const messageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
+    // ✅ NEW FIELD
+    isRead: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

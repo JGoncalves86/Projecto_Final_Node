@@ -62,10 +62,21 @@ const getMyConversations = async (userId) => {
   return Array.from(map.values());
 };
 
+// COUNT UNREAD MESSAGES FOR USER
+const getUnreadCount = async (userId) => {
+  const count = await Message.countDocuments({
+    isRead: false,
+    senderId: { $ne: userId }, // mensagens que não são minhas
+  });
+
+  return count;
+};
+
 module.exports = {
   createMessage,
   listMessagesByFlat,
   deleteMessage,
   getMyConversations,
+  getUnreadCount,
 };
 
