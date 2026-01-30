@@ -7,7 +7,12 @@ const createMessage = async (req, res, next) => {
     const { error } = createMessageSchema.validate(req.body);
     if (error) return res.status(400).json({ message: error.message });
 
-    const data = { ...req.body, senderId: req.user.id };
+    const data = {
+  flatId: req.body.flatId,
+  content: req.body.content,
+  senderId: req.user.id,
+  receiverId: req.body.receiverId,
+};
     const message = await messageService.createMessage(data);
 
     res.status(201).json({
@@ -72,6 +77,7 @@ const getUnreadCount = async (req, res, next) => {
     next(err);
   }
 };
+
 
 module.exports = {
   createMessage,
