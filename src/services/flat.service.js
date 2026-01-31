@@ -7,11 +7,14 @@ const User = require('../models/User');
 const createFlat = async (data) => {
   const { ownerId } = data;
 
-  // Verifica se o owner existe
   const owner = await User.findById(ownerId);
-  if (!owner) {
-    throw new Error('Owner user not found');
-  }
+  if (!owner) throw new Error('Owner user not found');
+
+  // Converter streetNumber e outros números para Number se necessário
+  data.streetNumber = Number(data.streetNumber);
+  data.areaSize = Number(data.areaSize);
+  data.rentPrice = Number(data.rentPrice);
+  if (data.yearBuilt) data.yearBuilt = Number(data.yearBuilt);
 
   const flat = await Flat.create(data);
   return flat;

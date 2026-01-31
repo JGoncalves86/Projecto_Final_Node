@@ -1,31 +1,36 @@
 const flatService = require('../services/flat.service');
 const { createFlatSchema, updateFlatSchema } = require('../validations/flat.validation');
 
-// ==========================
-// CREATE FLAT
-// ==========================
 const createFlat = async (req, res, next) => {
   try {
-    // adicionar imagens do upload ao body
-    if (req.files) {
-      req.body.images = req.files.map(file => file.path);
+    // ✅ adicionar imagens upload
+    if (req.files && req.files.length > 0) {
+      req.body.images = req.files.map(file => file.filename);
     }
 
+    // ✅ validar com Joi
     const { error } = createFlatSchema.validate(req.body);
-    if (error) return res.status(400).json({ message: error.message });
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
 
-    // ownerId = user autenticado
-    const data = { ...req.body, ownerId: req.user.id };
+    // ✅ ownerId = user autenticado
+    const data = {
+      ...req.body,
+      ownerId: req.user.id,
+    };
+
     const flat = await flatService.createFlat(data);
 
     res.status(201).json({
-      message: 'Flat created successfully',
+      message: "Flat created successfully",
       flat,
     });
   } catch (err) {
     next(err);
   }
 };
+
 
 // ==========================
 // UPDATE FLAT
