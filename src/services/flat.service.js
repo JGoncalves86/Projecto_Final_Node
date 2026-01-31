@@ -7,14 +7,18 @@ const User = require('../models/User');
 const createFlat = async (data) => {
   const { ownerId } = data;
 
+  // Verifica se o owner existe
   const owner = await User.findById(ownerId);
   if (!owner) throw new Error('Owner user not found');
 
-  // Converter streetNumber e outros números para Number se necessário
+  // Garantir que números são Numbers
   data.streetNumber = Number(data.streetNumber);
   data.areaSize = Number(data.areaSize);
   data.rentPrice = Number(data.rentPrice);
   if (data.yearBuilt) data.yearBuilt = Number(data.yearBuilt);
+
+  // Garantir que images é sempre array
+  if (!Array.isArray(data.images)) data.images = [];
 
   const flat = await Flat.create(data);
   return flat;
@@ -25,18 +29,22 @@ const createFlat = async (data) => {
 // ==========================
 const updateFlat = async (flatId, userId, data, isAdmin = false) => {
   const flat = await Flat.findById(flatId);
-  if (!flat) {
-    throw new Error('Flat not found');
-  }
+  if (!flat) throw new Error('Flat not found');
 
   // Ownership check
   if (!isAdmin && flat.ownerId.toString() !== userId) {
     throw new Error('Access denied. Only owner can update this flat.');
   }
 
+  // Atualiza apenas os campos recebidos
   Object.assign(flat, data);
-  await flat.save();
 
+  // Garantir images como array
+  if (data.images && !Array.isArray(data.images)) {
+    flat.images = [data.images];
+  }
+
+  await flat.save();
   return flat;
 };
 
@@ -45,9 +53,7 @@ const updateFlat = async (flatId, userId, data, isAdmin = false) => {
 // ==========================
 const deleteFlat = async (flatId, userId, isAdmin = false) => {
   const flat = await Flat.findById(flatId);
-  if (!flat) {
-    throw new Error('Flat not found');
-  }
+  if (!flat) throw new Error('Flat not found');
 
   if (!isAdmin && flat.ownerId.toString() !== userId) {
     throw new Error('Access denied. Only owner can delete this flat.');
@@ -62,9 +68,7 @@ const deleteFlat = async (flatId, userId, isAdmin = false) => {
 // ==========================
 const getFlatById = async (flatId) => {
   const flat = await Flat.findById(flatId).populate('ownerId', 'firstName lastName email');
-  if (!flat) {
-    throw new Error('Flat not found');
-  }
+  if (!flat) throw new Error('Flat not found');
   return flat;
 };
 
