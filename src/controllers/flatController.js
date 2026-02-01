@@ -26,8 +26,14 @@ const updateFlat = async (req, res, next) => {
     const { error } = updateFlatSchema.validate(req.body);
     if (error) return res.status(400).json({ status: 'fail', message: error.message });
 
-    const updatedFlat = await flatService.updateFlat(req.params.id, req.user.id, req.body, req.user.isAdmin);
-    res.status(200).json({ status: 'success', message: 'Flat updated', flat: updatedFlat });
+    const updatedFlat = await flatService.updateFlat(
+        req.params.id,
+        req.user.id,
+        req.body,
+        req.user.isAdmin
+      );
+      res.status(200).json({ status: 'success', message: 'Flat updated', flat: updatedFlat });
+
   } catch (err) {
     next(err);
   }
