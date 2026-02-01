@@ -34,7 +34,4 @@ router.patch(
   messageController.markAsRead
 );
 
-
-
-
 module.exports = router;

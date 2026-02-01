@@ -21,7 +21,12 @@ const createFlat = async (req, res, next) => {
 // UPDATE FLAT
 const updateFlat = async (req, res, next) => {
   try {
-    if (req.files?.length) req.body.images = req.files.map(f => f.filename);
+    const flat = await Flat.findById(req.params.id);
+
+    const newImages = req.files?.map(f => f.filename) || [];
+
+    req.body.images = [...flat.images, ...newImages];
+
 
     const { error } = updateFlatSchema.validate(req.body);
     if (error) return res.status(400).json({ status: 'fail', message: error.message });

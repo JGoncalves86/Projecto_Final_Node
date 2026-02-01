@@ -25,10 +25,11 @@ router.put('/me', authMiddleware, userController.updateProfile);
 router.get("/me/favourites", authMiddleware, userController.getMyFavourites);
 
 router.post(
-  '/me/favorites/:flatId',
+  "/me/favorites/:flatId",
   authMiddleware,
-  userService.addFavoriteFlat
+  userController.addFavourite
 );
+
 
 router.delete(
   '/me/favorites/:flatId',

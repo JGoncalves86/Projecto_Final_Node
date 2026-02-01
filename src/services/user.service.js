@@ -94,28 +94,32 @@ const deleteUser = async (id) => {
 // UPDATE USER
 // ==========================
 const updateUser = async (userId, data) => {
-  const user = await User.findById(userId);
-  if (!user) throw new Error('User not found');
+  const allowedFields = ["firstName", "lastName", "birthDate"];
 
-  if (data.password) {
-    data.password = await bcrypt.hash(data.password, 10);
-  }
+  const filteredData = {};
+  allowedFields.forEach((field) => {
+    if (data[field]) filteredData[field] = data[field];
+  });
 
-  Object.assign(user, data);
-  await user.save();
+  const user = await User.findByIdAndUpdate(
+    userId,
+    filteredData,
+    { new: true }
+  ).select("-password");
 
   return user;
 };
+
 
 // ==========================
 // FAVORITES
 // ==========================
 const addFavoriteFlat = async (userId, flatId) => {
   const user = await User.findById(userId);
-  if (!user) throw new Error('User not found');
 
-  if (!user.favorites) user.favorites = [];
-  if (!user.favorites.includes(flatId)) user.favorites.push(flatId);
+  if (!user.favouriteFlats.includes(flatId)) {
+    user.favouriteFlats.push(flatId);
+  }
 
   await user.save();
   return user;
@@ -123,12 +127,15 @@ const addFavoriteFlat = async (userId, flatId) => {
 
 const removeFavoriteFlat = async (userId, flatId) => {
   const user = await User.findById(userId);
-  if (!user) throw new Error('User not found');
 
-  user.favorites = user.favorites.filter(f => f.toString() !== flatId);
+  user.favouriteFlats = user.favouriteFlats.filter(
+    (f) => f.toString() !== flatId
+  );
+
   await user.save();
   return user;
 };
+
 
 module.exports = {
   registerUser,

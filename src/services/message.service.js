@@ -13,7 +13,13 @@ const createMessage = async (data) => {
   const sender = await User.findById(senderId);
   if (!sender) throw new Error('Sender not found');
 
-  const message = await Message.create({ flatId, senderId, content });
+  const message = await Message.create({
+  flatId,
+  senderId,
+  receiverId: data.receiverId,
+  content,
+});
+
   return message;
 };
 

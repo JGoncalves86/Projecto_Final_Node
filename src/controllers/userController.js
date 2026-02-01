@@ -1,6 +1,7 @@
 const userService = require('../services/user.service');
 const Joi = require('joi');
 const User = require("../models/User");
+const { updateUserSchema } = require("../validations/user.validation");
 
 
 // ==========================
@@ -85,15 +86,19 @@ const getProfile = async (req, res) => {
 // ==========================
 const updateProfile = async (req, res) => {
   try {
+    const { error } = updateUserSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+
     const updatedUser = await userService.updateUser(req.user.id, req.body);
+
     res.status(200).json({
-      status: 'success',
-      message: 'User updated successfully',
+      status: "success",
       user: updatedUser,
     });
   } catch (err) {
-    console.error('Update profile error:', err.message);
-    res.status(400).json({ status: 'fail', message: err.message });
+    res.status(400).json({ message: err.message });
   }
 };
 

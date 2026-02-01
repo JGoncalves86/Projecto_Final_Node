@@ -92,8 +92,6 @@ const markAsRead = async (req, res, next) => {
   }
 };
 
-
-
 module.exports = {
   createMessage,
   listMessagesByFlat,
@@ -102,6 +100,3 @@ module.exports = {
   getUnreadCount,
   markAsRead, // ✅ NEW
 };
-
-
-
