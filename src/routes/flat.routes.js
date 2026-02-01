@@ -1,9 +1,8 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-
-const flatController = require("../controllers/flatController");
-const authMiddleware = require("../middlewares/auth.middleware");
-const upload = require("../middlewares/upload.middleware");
+const flatController = require('../controllers/flatController');
+const authMiddleware = require('../middlewares/auth.middleware');
+const upload = require('../middlewares/upload.middleware');
 
 // CREATE FLAT
 router.post("/", authMiddleware, upload.array("images", 5), flatController.createFlat);
