@@ -8,7 +8,7 @@ const upload = require('../middlewares/upload.middleware');
 router.post("/", authMiddleware, upload.array("images", 5), flatController.createFlat);
 
 // UPDATE FLAT
-router.put("/:id", authMiddleware, upload.array("images", 5), flatController.updateFlat);
+router.patch("/:id", authMiddleware, upload.array("images", 5), flatController.updateFlat);
 
 router.get("/", flatController.listFlats);
 router.get("/:id", flatController.getFlatById);
