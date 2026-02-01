@@ -111,32 +111,6 @@ const updateUser = async (userId, data) => {
 };
 
 
-// ==========================
-// FAVORITES
-// ==========================
-const addFavoriteFlat = async (userId, flatId) => {
-  const user = await User.findById(userId);
-
-  if (!user.favouriteFlats.includes(flatId)) {
-    user.favouriteFlats.push(flatId);
-  }
-
-  await user.save();
-  return user;
-};
-
-const removeFavoriteFlat = async (userId, flatId) => {
-  const user = await User.findById(userId);
-
-  user.favouriteFlats = user.favouriteFlats.filter(
-    (f) => f.toString() !== flatId
-  );
-
-  await user.save();
-  return user;
-};
-
-
 module.exports = {
   registerUser,
   loginUser,
@@ -144,6 +118,4 @@ module.exports = {
   listAllUsers,
   deleteUser,
   updateUser,
-  addFavoriteFlat,
-  removeFavoriteFlat,
 };

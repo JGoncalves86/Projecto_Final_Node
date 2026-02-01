@@ -34,7 +34,7 @@ router.post(
 router.delete(
   '/me/favorites/:flatId',
   authMiddleware,
-  userService.removeFavoriteFlat    
+  userController.removeFavoriteFlat    
 );
 
 // ==========================

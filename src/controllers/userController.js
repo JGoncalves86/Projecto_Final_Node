@@ -117,10 +117,47 @@ const getMyFavourites = async (req, res, next) => {
   }
 };
 
+const addFavouriteFlat = async (req, res) => {
+  try {
+    const user = await userService.addFavoriteFlat(
+      req.user.id,
+      req.params.flatId
+    );
+
+    res.status(200).json({
+      status: "success",
+      message: "Flat added to favourites",
+      user,
+    });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+const removeFavouriteFlat = async (req, res) => {
+  try {
+    const user = await userService.removeFavoriteFlat(
+      req.user.id,
+      req.params.flatId
+    );
+
+    res.status(200).json({
+      status: "success",
+      message: "Flat removed from favourites",
+      user,
+    });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+
 module.exports = {
   register,
   login,
   getProfile,
   updateProfile,
   getMyFavourites,
+  addFavouriteFlat,
+  removeFavouriteFlat
 };
