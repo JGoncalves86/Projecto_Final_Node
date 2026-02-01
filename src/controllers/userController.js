@@ -74,12 +74,19 @@ const login = async (req, res) => {
 const getProfile = async (req, res) => {
   try {
     const user = await userService.getUserById(req.user.id);
-    res.status(200).json(user);
+
+    res.status(200).json({
+      status: "success",
+      user,
+    });
   } catch (err) {
-    console.error('Get profile error:', err.message);
-    res.status(404).json({ status: 'fail', message: err.message });
+    res.status(404).json({
+      status: "fail",
+      message: err.message,
+    });
   }
 };
+
 
 // ==========================
 // UPDATE PROFILE
@@ -120,7 +127,11 @@ const getMyFavourites = async (req, res, next) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json(user.favouriteFlats);
+    res.status(200).json({
+      status: "success",
+      favourites: user.favouriteFlats,
+});
+
   } catch (err) {
     next(err);
   }
