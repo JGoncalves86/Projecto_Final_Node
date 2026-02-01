@@ -21,44 +21,39 @@ const createFlat = async (data) => {
 
 // ---------------- UPDATE FLAT ----------------
 const updateFlat = async (flatId, userId, data, isAdmin = false) => {
-  const flat = await Flat.findById(flatId);
-
-  if (!flat) throw new Error("Flat not found");
-
-  if (!isAdmin && flat.ownerId.toString() !== userId) {
-    throw new Error("Access denied. Only owner can update this flat.");
-  }
-
-  Object.assign(flat, data);
-
+  // Garantir que images seja array
   if (data.images && !Array.isArray(data.images)) {
-    flat.images = [data.images];
+    data.images = [data.images];
   }
 
-  await flat.save();
-  return flat;
+  // Filtro de permissão
+  const filter = isAdmin
+    ? { _id: flatId }
+    : { _id: flatId, ownerId: userId };
+
+  const updatedFlat = await Flat.findOneAndUpdate(
+    filter,
+    { $set: data },
+    { new: true } // retorna o documento atualizado
+  );
+
+  if (!updatedFlat) throw new Error("Flat not found or access denied");
+
+  return updatedFlat;
 };
 
-/// DELETE FLAT
+// ---------------- DELETE FLAT ----------------
 const deleteFlat = async (flatId, userId, isAdmin = false) => {
-  const flat = await Flat.findById(flatId);
+  const filter = isAdmin
+    ? { _id: flatId }
+    : { _id: flatId, ownerId: userId };
 
-  if (!flat) {
-    throw new Error("Flat not found");
-  }
+  const deleted = await Flat.findOneAndDelete(filter);
 
-  // Verificação de permissão
-  if (!isAdmin && flat.ownerId.toString() !== userId.toString()) {
-    throw new Error("Access denied. Only owner can delete this flat.");
-  }
-
-  // ✅ CORRETO NO MONGOOSE MODERNO
-  await Flat.deleteOne({ _id: flatId });
+  if (!deleted) throw new Error("Flat not found or access denied");
 
   return { message: "Flat deleted successfully" };
 };
-
-
 
 // ---------------- GET FLAT BY ID ----------------
 const getFlatById = async (flatId) => {
@@ -79,7 +74,7 @@ const listFlats = async (
   limit = 20,
   skip = 0
 ) => {
-  const query = {};
+  const query: any = {};
 
   if (filters.city) query.city = { $regex: filters.city, $options: "i" };
   if (filters.hasAC !== undefined) query.hasAC = filters.hasAC;
