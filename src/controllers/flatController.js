@@ -1,5 +1,6 @@
 const flatService = require('../services/flat.service');
 const { createFlatSchema, updateFlatSchema } = require('../validations/flat.validation');
+const Flat = require("../models/Flat");
 
 // CREATE FLAT
 const createFlat = async (req, res, next) => {
@@ -23,22 +24,39 @@ const updateFlat = async (req, res, next) => {
   try {
     const flat = await Flat.findById(req.params.id);
 
-    const newImages = req.files?.map(f => f.filename) || [];
+    if (!flat) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Flat not found",
+      });
+    }
 
+    // novas imagens (se vierem)
+    const newImages = req.files?.map((f) => f.filename) || [];
+
+    // manter antigas + novas
     req.body.images = [...flat.images, ...newImages];
 
-
     const { error } = updateFlatSchema.validate(req.body);
-    if (error) return res.status(400).json({ status: 'fail', message: error.message });
+    if (error) {
+      return res.status(400).json({
+        status: "fail",
+        message: error.message,
+      });
+    }
 
     const updatedFlat = await flatService.updateFlat(
-        req.params.id,
-        req.user.id,
-        req.body,
-        req.user.isAdmin
-      );
-      res.status(200).json({ status: 'success', message: 'Flat updated', flat: updatedFlat });
+      req.params.id,
+      req.user.id,
+      req.body,
+      req.user.isAdmin
+    );
 
+    res.status(200).json({
+      status: "success",
+      message: "Flat updated successfully",
+      flat: updatedFlat,
+    });
   } catch (err) {
     next(err);
   }

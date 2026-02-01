@@ -97,18 +97,24 @@ const updateUser = async (userId, data) => {
   const allowedFields = ["firstName", "lastName", "birthDate"];
 
   const filteredData = {};
+
   allowedFields.forEach((field) => {
-    if (data[field]) filteredData[field] = data[field];
+    if (data[field] !== undefined) {
+      filteredData[field] = data[field];
+    }
   });
 
-  const user = await User.findByIdAndUpdate(
+  const updatedUser = await User.findByIdAndUpdate(
     userId,
-    filteredData,
+    { $set: filteredData },
     { new: true }
   ).select("-password");
 
-  return user;
+  if (!updatedUser) throw new Error("User not found");
+
+  return updatedUser;
 };
+
 
 
 module.exports = {

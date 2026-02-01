@@ -86,19 +86,28 @@ const getProfile = async (req, res) => {
 // ==========================
 const updateProfile = async (req, res) => {
   try {
+    // validar body
     const { error } = updateUserSchema.validate(req.body);
     if (error) {
-      return res.status(400).json({ message: error.message });
+      return res.status(400).json({
+        status: "fail",
+        message: error.message,
+      });
     }
 
+    // update seguro
     const updatedUser = await userService.updateUser(req.user.id, req.body);
 
     res.status(200).json({
       status: "success",
+      message: "Profile updated successfully",
       user: updatedUser,
     });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({
+      status: "fail",
+      message: err.message,
+    });
   }
 };
 

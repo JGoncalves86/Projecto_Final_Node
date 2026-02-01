@@ -3,25 +3,27 @@ const Flat = require('../models/Flat');
 const User = require('../models/User');
 
 const createMessage = async (data) => {
-  const { flatId, senderId, content } = data;
+  const { flatId, senderId, receiverId, content } = data;
 
-  // verifica se flat existe
   const flat = await Flat.findById(flatId);
-  if (!flat) throw new Error('Flat not found');
+  if (!flat) throw new Error("Flat not found");
 
-  // verifica se sender existe
   const sender = await User.findById(senderId);
-  if (!sender) throw new Error('Sender not found');
+  if (!sender) throw new Error("Sender not found");
+
+  const receiver = await User.findById(receiverId);
+  if (!receiver) throw new Error("Receiver not found");
 
   const message = await Message.create({
-  flatId,
-  senderId,
-  receiverId: data.receiverId,
-  content,
-});
+    flatId,
+    senderId,
+    receiverId,
+    content,
+  });
 
   return message;
 };
+
 
 const listMessagesByFlat = async (flatId) => {
   const messages = await Message.find({ flatId })
