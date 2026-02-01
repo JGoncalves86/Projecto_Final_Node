@@ -74,8 +74,8 @@ const listFlats = async (
   limit = 20,
   skip = 0
 ) => {
-  const query: any = {};
-
+  const query = {};
+s
   if (filters.city) query.city = { $regex: filters.city, $options: "i" };
   if (filters.hasAC !== undefined) query.hasAC = filters.hasAC;
   if (filters.minPrice !== undefined)
