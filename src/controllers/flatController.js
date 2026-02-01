@@ -34,14 +34,29 @@ const updateFlat = async (req, res, next) => {
 };
 
 // DELETE FLAT
-const deleteFlat = async (req, res, next) => {
+const deleteFlat = async (req, res) => {
   try {
-    const result = await flatService.deleteFlat(req.params.id, req.user.id, req.user.isAdmin);
-    res.status(200).json({ status: 'success', ...result });
+    const result = await flatService.deleteFlat(
+      req.params.id,
+      req.user.id,
+      req.user.isAdmin
+    );
+
+    res.status(200).json({
+      status: "success",
+      message: result.message,
+    });
   } catch (err) {
-    next(err);
+    console.log("DELETE ERROR:", err);
+    res.status(400).json({
+      status: "fail",
+      message: err.message,
+    });
   }
 };
+
+
+
 
 // GET FLAT BY ID
 const getFlatById = async (req, res, next) => {
