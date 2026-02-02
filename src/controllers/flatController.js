@@ -3,62 +3,53 @@ const { createFlatSchema, updateFlatSchema } = require('../validations/flat.vali
 const Flat = require("../models/Flat");
 
 // CREATE FLAT
-export const createFlat = async (req, res) => {
+const createFlat = async (req, res, next) => {
   try {
-    const { city, streetName, streetNumber, areaSize, rentPrice, hasAC, yearBuilt, dateAvailable } = req.body;
+    const images = req.files?.map(f => f.filename) || [];
+    req.body.images = images;
+    req.body.ownerId = req.user.id;
 
-    const images = req.files ? req.files.map(f => f.filename) : [];
+    const { error } = createFlatSchema.validate(req.body);
+    if (error) return res.status(400).json({ status: 'fail', message: error.message });
 
-    const flat = await Flat.create({
-      city,
-      streetName,
-      streetNumber,
-      areaSize,
-      rentPrice,
-      hasAC: hasAC === "true",
-      yearBuilt,
-      dateAvailable,
-      images,
-      ownerId: req.user._id,
-    });
-
-    return res.status(201).json({ status: "success", flat });
+    const flat = await flatService.createFlat(req.body);
+    res.status(201).json({ status: 'success', message: 'Flat created', flat });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Erro ao criar flat" });
+    next(err);
   }
 };
 
 // UPDATE FLAT
-export const updateFlat = async (req, res) => {
+const updateFlat = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const flat = await Flat.findById(id);
-    if (!flat) return res.status(404).json({ message: "Flat não encontrado" });
+    const flat = await Flat.findById(req.params.id);
+    if (!flat) return res.status(404).json({ status: "fail", message: "Flat not found" });
 
-    // Campos do body
-    const { city, streetName, streetNumber, areaSize, rentPrice, hasAC, yearBuilt, dateAvailable, existingImages } = req.body;
+    // novas imagens
+    const newImages = req.files?.map(f => f.filename) || [];
 
-    flat.city = city || flat.city;
-    flat.streetName = streetName || flat.streetName;
-    flat.streetNumber = streetNumber ?? flat.streetNumber;
-    flat.areaSize = areaSize ?? flat.areaSize;
-    flat.rentPrice = rentPrice ?? flat.rentPrice;
-    flat.hasAC = hasAC === "true" ? true : hasAC === "false" ? false : flat.hasAC;
-    flat.yearBuilt = yearBuilt ?? flat.yearBuilt;
-    flat.dateAvailable = dateAvailable || flat.dateAvailable;
+    // combina antigas + novas
+    req.body.images = [...flat.images, ...newImages];
 
-    // Imagens
-    const oldImages = Array.isArray(existingImages) ? existingImages : existingImages ? [existingImages] : [];
-    const newImages = req.files ? req.files.map(f => f.filename) : [];
-    flat.images = [...oldImages, ...newImages];
+    // validação
+    const { error } = updateFlatSchema.validate(req.body);
+    if (error) return res.status(400).json({ status: "fail", message: error.message });
 
-    await flat.save();
+    // atualização
+    const updatedFlat = await flatService.updateFlat(
+      req.params.id,
+      req.user.id,
+      req.body,
+      req.user.isAdmin
+    );
 
-    return res.json({ status: "success", message: "Flat updated successfully", flat });
+    res.status(200).json({
+      status: "success",
+      message: "Flat updated successfully",
+      flat: updatedFlat,
+    });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Erro ao atualizar flat" });
+    next(err);
   }
 };
 
