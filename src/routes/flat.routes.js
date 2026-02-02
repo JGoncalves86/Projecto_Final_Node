@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const flatController = require('../controllers/flatController');
+const flatController = require('../controllers/flatController.js');
 const authMiddleware = require('../middlewares/auth.middleware');
 const upload = require('../middlewares/upload.middleware');
 
