@@ -26,7 +26,7 @@ const updateFlat = async (req, res, next) => {
     if (!flat) return res.status(404).json({ status: "fail", message: "Flat not found" });
 
     // novas imagens
-    const newImages = req.files?.map((f) => f.filename) || [];
+    const newImages = req.files?.map(f => f.filename) || [];
 
     // combina antigas + novas
     req.body.images = [...flat.images, ...newImages];
