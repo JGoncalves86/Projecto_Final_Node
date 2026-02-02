@@ -1,17 +1,17 @@
 const multer = require("multer");
 
-// --------------------
+// ============================
 // Armazenamento em memória
-// --------------------
-// Evita salvar arquivos no disco, perfeito para enviar direto para Cloudinary
+// ============================
+// Evita salvar arquivos no disco, ideal para enviar direto ao Cloudinary
 const storage = multer.memoryStorage();
 
-// --------------------
+// ============================
 // Configuração do Multer
-// --------------------
+// ============================
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // Limite de 5MB por arquivo
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limite: 5MB por arquivo
   fileFilter: (req, file, cb) => {
     // Aceita apenas imagens
     if (!file.mimetype.startsWith("image/")) {
@@ -21,10 +21,14 @@ const upload = multer({
   },
 });
 
-// --------------------
+// ============================
 // Middleware para múltiplos arquivos
-// --------------------
+// ============================
 // 'images' é o nome do campo do formData enviado do frontend
-const uploadImages = upload.array("images", 10); // máximo 10 imagens por upload
+// Máximo de 10 imagens por upload
+const uploadImages = upload.array("images", 10);
 
+// ============================
+// Export
+// ============================
 module.exports = uploadImages;

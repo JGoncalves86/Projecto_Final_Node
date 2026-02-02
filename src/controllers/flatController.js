@@ -3,27 +3,29 @@ const { createFlatSchema, updateFlatSchema } = require('../validations/flat.vali
 const Flat = require("../models/Flat");
 const cloudinary = require("../config/cloudinary");
 
+// Função utilitária para upload de imagens
+const uploadFilesToCloudinary = async (files) => {
+  const urls = [];
+
+  for (const file of files) {
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream({ resource_type: "image" }, (err, res) => {
+        if (err) reject(err);
+        else resolve(res);
+      });
+      stream.end(file.buffer);
+    });
+    urls.push(result.secure_url);
+  }
+
+  return urls;
+};
+
 // CREATE FLAT
 const createFlat = async (req, res, next) => {
   try {
     const files = req.files || [];
-    const imageUrls = [];
-
-    for (const file of files) {
-      const result = await cloudinary.uploader.upload_stream({ resource_type: "image" }, (error, result) => {
-        if (error) throw error;
-        return result;
-      });
-      // Como usamos memoryStorage, precisamos de upload_stream com buffer
-      const uploadResult = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream((err, result) => {
-          if (err) reject(err);
-          else resolve(result);
-        });
-        stream.end(file.buffer);
-      });
-      imageUrls.push(uploadResult.secure_url);
-    }
+    const imageUrls = await uploadFilesToCloudinary(files);
 
     req.body.images = imageUrls;
     req.body.ownerId = req.user.id;
@@ -45,18 +47,7 @@ const updateFlat = async (req, res, next) => {
     if (!flat) return res.status(404).json({ status: "fail", message: "Flat not found" });
 
     const files = req.files || [];
-    const newImageUrls = [];
-
-    for (const file of files) {
-      const uploadResult = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream((err, result) => {
-          if (err) reject(err);
-          else resolve(result);
-        });
-        stream.end(file.buffer);
-      });
-      newImageUrls.push(uploadResult.secure_url);
-    }
+    const newImageUrls = await uploadFilesToCloudinary(files);
 
     // mantém as antigas + novas
     req.body.images = [...flat.images, ...newImageUrls];
@@ -81,9 +72,7 @@ const updateFlat = async (req, res, next) => {
   }
 };
 
-
-
-// DELETE FLAT
+// DELETE FLAT, GET, LIST permanecem iguais
 const deleteFlat = async (req, res) => {
   try {
     const result = await flatService.deleteFlat(
@@ -105,10 +94,6 @@ const deleteFlat = async (req, res) => {
   }
 };
 
-
-
-
-// GET FLAT BY ID
 const getFlatById = async (req, res, next) => {
   try {
     const flat = await flatService.getFlatById(req.params.id);
@@ -118,7 +103,6 @@ const getFlatById = async (req, res, next) => {
   }
 };
 
-// LIST FLATS
 const listFlats = async (req, res, next) => {
   try {
     const filters = {

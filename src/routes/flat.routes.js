@@ -5,10 +5,10 @@ const authMiddleware = require('../middlewares/auth.middleware');
 const uploadImages = require("../middlewares/upload.middleware");
 
 // CREATE FLAT
-router.post("/", authMiddleware, upload.array("images", 5), flatController.createFlat);
+router.post("/", authMiddleware, uploadImages, flatController.createFlat);
 
 // UPDATE FLAT
-router.patch("/:id", authMiddleware, upload.array("images", 5), flatController.updateFlat);
+router.patch("/:id", authMiddleware, uploadImages, flatController.updateFlat);
 
 router.get("/", flatController.listFlats);
 router.get("/:id", flatController.getFlatById);
