@@ -23,28 +23,19 @@ const createFlat = async (req, res, next) => {
 const updateFlat = async (req, res, next) => {
   try {
     const flat = await Flat.findById(req.params.id);
+    if (!flat) return res.status(404).json({ status: "fail", message: "Flat not found" });
 
-    if (!flat) {
-      return res.status(404).json({
-        status: "fail",
-        message: "Flat not found",
-      });
-    }
-
-    // novas imagens (se vierem)
+    // novas imagens
     const newImages = req.files?.map((f) => f.filename) || [];
 
-    // manter antigas + novas
+    // combina antigas + novas
     req.body.images = [...flat.images, ...newImages];
 
+    // validação
     const { error } = updateFlatSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({
-        status: "fail",
-        message: error.message,
-      });
-    }
+    if (error) return res.status(400).json({ status: "fail", message: error.message });
 
+    // atualização
     const updatedFlat = await flatService.updateFlat(
       req.params.id,
       req.user.id,
@@ -61,6 +52,7 @@ const updateFlat = async (req, res, next) => {
     next(err);
   }
 };
+
 
 // DELETE FLAT
 const deleteFlat = async (req, res) => {

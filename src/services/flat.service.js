@@ -21,26 +21,21 @@ const createFlat = async (data) => {
 
 // ---------------- UPDATE FLAT ----------------
 const updateFlat = async (flatId, userId, data, isAdmin = false) => {
-  // Garantir que images seja array
-  if (data.images && !Array.isArray(data.images)) {
-    data.images = [data.images];
-  }
+  // garantir que images seja array
+  if (data.images && !Array.isArray(data.images)) data.images = [data.images];
 
-  // Filtro de permissão
+  // filtro de permissão
   const filter = isAdmin
     ? { _id: flatId }
     : { _id: flatId, ownerId: userId };
 
-  const updatedFlat = await Flat.findOneAndUpdate(
-    filter,
-    { $set: data },
-    { new: true } // retorna o documento atualizado
-  );
+  const updatedFlat = await Flat.findOneAndUpdate(filter, { $set: data }, { new: true });
 
   if (!updatedFlat) throw new Error("Flat not found or access denied");
 
   return updatedFlat;
 };
+
 
 // ---------------- DELETE FLAT ----------------
 const deleteFlat = async (flatId, userId, isAdmin = false) => {
