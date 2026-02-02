@@ -1,19 +1,38 @@
 const flatService = require('../services/flat.service');
 const { createFlatSchema, updateFlatSchema } = require('../validations/flat.validation');
 const Flat = require("../models/Flat");
+const cloudinary = require("../config/cloudinary");
 
 // CREATE FLAT
 const createFlat = async (req, res, next) => {
   try {
-    const images = req.files?.map(f => f.filename) || [];
-    req.body.images = images;
+    const files = req.files || [];
+    const imageUrls = [];
+
+    for (const file of files) {
+      const result = await cloudinary.uploader.upload_stream({ resource_type: "image" }, (error, result) => {
+        if (error) throw error;
+        return result;
+      });
+      // Como usamos memoryStorage, precisamos de upload_stream com buffer
+      const uploadResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream((err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        });
+        stream.end(file.buffer);
+      });
+      imageUrls.push(uploadResult.secure_url);
+    }
+
+    req.body.images = imageUrls;
     req.body.ownerId = req.user.id;
 
     const { error } = createFlatSchema.validate(req.body);
-    if (error) return res.status(400).json({ status: 'fail', message: error.message });
+    if (error) return res.status(400).json({ status: "fail", message: error.message });
 
     const flat = await flatService.createFlat(req.body);
-    res.status(201).json({ status: 'success', message: 'Flat created', flat });
+    res.status(201).json({ status: "success", message: "Flat created", flat });
   } catch (err) {
     next(err);
   }
@@ -25,17 +44,26 @@ const updateFlat = async (req, res, next) => {
     const flat = await Flat.findById(req.params.id);
     if (!flat) return res.status(404).json({ status: "fail", message: "Flat not found" });
 
-    // novas imagens
-    const newImages = req.files?.map(f => f.filename) || [];
+    const files = req.files || [];
+    const newImageUrls = [];
 
-    // combina antigas + novas
-    req.body.images = [...flat.images, ...newImages];
+    for (const file of files) {
+      const uploadResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream((err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        });
+        stream.end(file.buffer);
+      });
+      newImageUrls.push(uploadResult.secure_url);
+    }
 
-    // validação
+    // mantém as antigas + novas
+    req.body.images = [...flat.images, ...newImageUrls];
+
     const { error } = updateFlatSchema.validate(req.body);
     if (error) return res.status(400).json({ status: "fail", message: error.message });
 
-    // atualização
     const updatedFlat = await flatService.updateFlat(
       req.params.id,
       req.user.id,
@@ -52,6 +80,7 @@ const updateFlat = async (req, res, next) => {
     next(err);
   }
 };
+
 
 
 // DELETE FLAT

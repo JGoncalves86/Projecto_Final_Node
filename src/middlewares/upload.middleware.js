@@ -1,23 +1,30 @@
-// middlewares/upload.middleware.js
 const multer = require("multer");
-const path = require("path");
 
-// Pasta de destino
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+// --------------------
+// Armazenamento em memória
+// --------------------
+// Evita salvar arquivos no disco, perfeito para enviar direto para Cloudinary
+const storage = multer.memoryStorage();
+
+// --------------------
+// Configuração do Multer
+// --------------------
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limite de 5MB por arquivo
+  fileFilter: (req, file, cb) => {
+    // Aceita apenas imagens
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Apenas arquivos de imagem são permitidos!"));
+    }
+    cb(null, true);
   },
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowed = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".pdf"];
-  const ext = path.extname(file.originalname).toLowerCase();
-  if (allowed.includes(ext)) cb(null, true);
-  else cb(new Error("Tipo de ficheiro não permitido"));
-};
+// --------------------
+// Middleware para múltiplos arquivos
+// --------------------
+// 'images' é o nome do campo do formData enviado do frontend
+const uploadImages = upload.array("images", 10); // máximo 10 imagens por upload
 
-const upload = multer({ storage, fileFilter });
-
-module.exports = upload;
+module.exports = uploadImages;
