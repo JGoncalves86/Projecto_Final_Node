@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User'); 
 const { generateToken } = require('../config/jwt');
+const Flat = require("../models/Flat");
+
 
 // ==========================
 // REGISTER USER
@@ -115,7 +117,42 @@ const updateUser = async (userId, data) => {
   return updatedUser;
 };
 
+// ==========================
+// ADD FAVORITE FLAT
+// ==========================
+const addFavoriteFlat = async (userId, flatId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error("User not found");
 
+  const flat = await Flat.findById(flatId);
+  if (!flat) throw new Error("Flat not found");
+
+  // evitar duplicados
+  if (user.favouriteFlats.includes(flatId)) {
+    throw new Error("Flat already in favourites");
+  }
+
+  user.favouriteFlats.push(flatId);
+  await user.save();
+
+  return user;
+};
+
+// ==========================
+// REMOVE FAVORITE FLAT
+// ==========================
+const removeFavoriteFlat = async (userId, flatId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  user.favouriteFlats = user.favouriteFlats.filter(
+    (id) => id.toString() !== flatId
+  );
+
+  await user.save();
+
+  return user;
+};
 
 module.exports = {
   registerUser,
@@ -124,4 +161,8 @@ module.exports = {
   listAllUsers,
   deleteUser,
   updateUser,
+
+  // ✅ Favorites
+  addFavoriteFlat,
+  removeFavoriteFlat,
 };
