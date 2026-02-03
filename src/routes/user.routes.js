@@ -54,4 +54,12 @@ router.delete(
   userService.deleteUser
 );
 
+router.patch(
+  "/:id",
+  authMiddleware,
+  adminMiddleware,
+  userController.updateUserByAdmin
+);
+
+
 module.exports = router;

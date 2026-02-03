@@ -177,6 +177,37 @@ const removeFavouriteFlat = async (req, res) => {
   }
 };
 
+// ==========================
+// ADMIN UPDATE USER
+// ==========================
+const updateUserByAdmin = async (req, res, next) => {
+  try {
+    const userId = req.params.id;
+
+    // Só permitimos alterar isAdmin por segurança
+    const { isAdmin } = req.body;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { isAdmin },
+      { new: true }
+    ).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      user: updatedUser,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 module.exports = {
   register,
@@ -185,5 +216,6 @@ module.exports = {
   updateProfile,
   getMyFavourites,
   addFavouriteFlat,
-  removeFavouriteFlat
+  removeFavouriteFlat,
+  updateUserByAdmin,
 };
