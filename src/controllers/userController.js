@@ -139,6 +139,9 @@ const getMyFavourites = async (req, res, next) => {
 
 const addFavouriteFlat = async (req, res) => {
   try {
+    console.log("✅ addFavouriteFlat chamado");
+    console.log("User ID:", req.user?.id);
+    console.log("Flat ID:", req.params.flatId);
     const user = await userService.addFavoriteFlat(
       req.user.id,
       req.params.flatId
@@ -156,6 +159,9 @@ const addFavouriteFlat = async (req, res) => {
 
 const removeFavouriteFlat = async (req, res) => {
   try {
+    console.log("✅ removeFavouriteFlat chamado");
+    console.log("User ID:", req.user?.id);
+    console.log("Flat ID:", req.params.flatId);
     const user = await userService.removeFavoriteFlat(
       req.user.id,
       req.params.flatId
