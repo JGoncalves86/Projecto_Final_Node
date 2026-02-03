@@ -28,10 +28,12 @@ const createMessage = async (data) => {
 const listMessagesByFlat = async (flatId) => {
   const messages = await Message.find({ flatId })
     .populate('senderId', 'firstName lastName email')
+    .populate('receiverId', 'firstName lastName email')
     .sort({ createdAt: 1 });
 
   return messages;
 };
+
 
 const deleteMessage = async (messageId, userId, isAdmin = false) => {
   const message = await Message.findById(messageId);
@@ -46,29 +48,37 @@ const deleteMessage = async (messageId, userId, isAdmin = false) => {
 };
 
 // LIST FLATS WHERE USER HAS MESSAGES
-const getMyConversations = async (userId) => {
-  const messages = await Message.find({ senderId: userId })
-    .populate("flatId", "title city images")
-    .sort({ createdAt: -1 });
+const getMyConversations = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
 
-  // agrupar por flat
-  const map = new Map();
+    const conversations = await Message.aggregate([
+      {
+        $match: {
+          $or: [
+            { senderId: new mongoose.Types.ObjectId(userId) },
+            { receiverId: new mongoose.Types.ObjectId(userId) },
+          ],
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: "$flatId",
+          lastMessage: { $first: "$$ROOT" },
+        },
+      },
+    ]);
 
-  messages.forEach((msg) => {
-    const flat = msg.flatId;
-    if (!flat) return;
-
-    if (!map.has(flat._id.toString())) {
-      map.set(flat._id.toString(), {
-        flat,
-        lastMessage: msg.content,
-        date: msg.createdAt,
-      });
-    }
-  });
-
-  return Array.from(map.values());
+    res.status(200).json({
+      status: "success",
+      conversations,
+    });
+  } catch (err) {
+    next(err);
+  }
 };
+
 
 // COUNT UNREAD MESSAGES FOR USER
 const getUnreadCount = async (userId) => {
