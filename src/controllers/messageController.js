@@ -122,6 +122,8 @@ const getUnreadCount = async (req, res, next) => {
 // ==============================
 const markAsRead = async (req, res, next) => {
   try {
+    console.log("TOKEN USER:", req.user);
+
     const flatId = req.params.flatId;
     const userId = req.user.id;
 

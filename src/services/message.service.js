@@ -48,37 +48,31 @@ const deleteMessage = async (messageId, userId, isAdmin = false) => {
 };
 
 // LIST FLATS WHERE USER HAS MESSAGES
-const getMyConversations = async (req, res, next) => {
-  try {
-    const userId = req.user.id;
+const getMyConversations = async (userId) => {
+  const messages = await Message.find({
+    $or: [{ senderId: userId }, { receiverId: userId }],
+  })
+    .populate("senderId", "firstName lastName email")
+    .populate("receiverId", "firstName lastName email")
+    .populate("flatId", "city streetName");
 
-    const conversations = await Message.aggregate([
-      {
-        $match: {
-          $or: [
-            { senderId: new mongoose.Types.ObjectId(userId) },
-            { receiverId: new mongoose.Types.ObjectId(userId) },
-          ],
-        },
-      },
-      { $sort: { createdAt: -1 } },
-      {
-        $group: {
-          _id: "$flatId",
-          lastMessage: { $first: "$$ROOT" },
-        },
-      },
-    ]);
+  const grouped = {};
 
-    res.status(200).json({
-      status: "success",
-      conversations,
-    });
-  } catch (err) {
-    next(err);
-  }
+  messages.forEach((msg) => {
+    const flatKey = msg.flatId._id.toString();
+
+    if (!grouped[flatKey]) {
+      grouped[flatKey] = {
+        flat: msg.flatId,
+        messages: [],
+      };
+    }
+
+    grouped[flatKey].messages.push(msg);
+  });
+
+  return Object.values(grouped);
 };
-
 
 // COUNT UNREAD MESSAGES FOR USER
 const getUnreadCount = async (userId) => {
