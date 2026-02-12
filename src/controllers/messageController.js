@@ -127,7 +127,12 @@ const markAsRead = async (req, res, next) => {
     const flatId = req.params.flatId;
     const userId = req.user.id;
 
-    const result = await messageService.markFlatMessagesAsRead(flatId, userId);
+    const result = await messageService.markFlatMessagesAsRead({
+      flatId,
+      receiverId: userId,
+      isRead: false
+    },
+    { isRead: true });
 
     res.status(200).json({
       status: "success",
